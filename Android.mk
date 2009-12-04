@@ -47,6 +47,10 @@ endif
 
   LOCAL_CFLAGS := -D_POSIX_SOURCE
 
+ifeq ($(BOARD_HAVE_BLUETOOTH),true)
+        LOCAL_CFLAGS += -DWITH_A2DP
+endif
+
   LOCAL_SRC_FILES := AudioPolicyManagerALSA.cpp
 
   LOCAL_MODULE := libaudiopolicy
