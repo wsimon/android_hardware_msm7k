@@ -119,9 +119,9 @@ status_t AudioStreamInALSA::close()
 
     acoustic_device_t *aDev = acoustics();
 
-    if (mHandle && aDev) aDev->cleanup(aDev);
-
-    close();
+    if (mHandle && aDev) {
+        aDev->cleanup(aDev);
+    }
 
     if (mPowerLock) {
         release_wake_lock ("AudioInLock");
