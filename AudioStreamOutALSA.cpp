@@ -98,6 +98,12 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
 
             if (aDev && aDev->recover) aDev->recover(aDev, n);
         }
+        else if (n == -EPIPE) {
+            /* there should be a better way to recover, for now reset the device */
+            /* Temporarily commenting out error log */
+            /* LOGE("ERROR PIPE (underflow), resetting to RECOVER!!\n\n"); */
+            if (aDev && aDev->recover) aDev->recover(aDev, n);
+        }
         else if (n < 0) {
             if (mHandle->handle) {
                 // snd_pcm_recover() will return 0 if successful in recovering from
