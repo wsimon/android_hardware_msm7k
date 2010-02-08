@@ -214,7 +214,7 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
                             mOutputs.valueFor(mHardwareOutput)->isUsedByStrategy(STRATEGY_DTMF)) {
                          newDevice = device;
                     }
-                } else if (device == AudioSystem::DEVICE_OUT_TTY) {
+                } /* else if (device == AudioSystem::DEVICE_OUT_TTY) {
                     LOGV("setDeviceConnectionState() tty device");
                     // if connecting a wired headset, we check the following by order of priority
                     // to request a routing change if necessary:
@@ -242,7 +242,7 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
                         newDevice = device;
                     }
                 }
-
+                */
                 // request routing change if necessary
                 setOutputDevice(mHardwareOutput, newDevice);
             }
@@ -390,7 +390,7 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
                                mOutputs.valueFor(mHardwareOutput)->isUsedByStrategy(STRATEGY_DTMF)){
                         newDevice = getDeviceForStrategy(STRATEGY_DTMF);
                     }
-                } else if (device == AudioSystem::DEVICE_OUT_TTY) {
+                }/* else if (device == AudioSystem::DEVICE_OUT_TTY) {
                     LOGV("setDeviceConnectionState() tty device");
                     if (wasUsedforPhone &&
                         (mPhoneState == AudioSystem::MODE_IN_CALL ||
@@ -407,7 +407,7 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
                                mOutputs.valueFor(mHardwareOutput)->isUsedByStrategy(STRATEGY_MEDIA)){
                         newDevice = getDeviceForStrategy(STRATEGY_MEDIA);
                     }
-                }
+                } */
             }
             // request routing change if necessary
             setOutputDevice(mHardwareOutput, newDevice);
@@ -1345,8 +1345,8 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy)
             // FALL THROUGH
 
         default:    // FORCE_NONE
-            device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_TTY;
-            if (device) break;
+//            device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_TTY;
+//            if (device) break;
             device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADPHONE;
             if (device) break;
             device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADSET;
@@ -1362,7 +1362,7 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy)
                 device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_BLUETOOTH_SCO_CARKIT;
                 if (device) break;
             }
-            device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_FM_SPEAKER;
+            device = mAvailableOutputDevices; // & AudioSystem::DEVICE_OUT_FM_SPEAKER;
             if (device) break;
             device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_SPEAKER;
             if (device == 0) {
@@ -1396,9 +1396,9 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy)
                 if (device2 == 0) {
                     device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER;
                     if (device2 == 0) {
-                        device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_FM_HEADPHONE;
+                        //device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_FM_HEADPHONE;
                         if (device2 == 0) {
-                            device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_FM_SPEAKER;
+                            //device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_FM_SPEAKER;
                             if (device2 == 0) {
                                 device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADPHONE;
                                 if (device2 == 0) {
