@@ -46,6 +46,64 @@ ALSAControl::~ALSAControl()
     if (mHandle) snd_ctl_close(mHandle);
 }
 
+#ifdef AUDIO_MODEM_TI
+status_t ALSAControl::getmin(const char *name, unsigned int &min)
+{
+    if (!mHandle) {
+        LOGE("Control not initialized");
+        return NO_INIT;
+    }
+
+    snd_ctl_elem_id_t *id;
+    snd_ctl_elem_info_t *info;
+
+    snd_ctl_elem_id_alloca(&id);
+    snd_ctl_elem_info_alloca(&info);
+
+    snd_ctl_elem_id_set_interface(id, SND_CTL_ELEM_IFACE_MIXER);
+    snd_ctl_elem_id_set_name(id, name);
+    snd_ctl_elem_info_set_id(info, id);
+
+    int ret = snd_ctl_elem_info(mHandle, info);
+    if (ret < 0) {
+        LOGE("Control '%s' cannot get element info: %d", name, ret);
+        return BAD_VALUE;
+    }
+
+    min = snd_ctl_elem_info_get_min(info);
+
+    return NO_ERROR;
+}
+
+status_t ALSAControl::getmax(const char *name, unsigned int &max)
+{
+    if (!mHandle) {
+        LOGE("Control not initialized");
+        return NO_INIT;
+    }
+
+    snd_ctl_elem_id_t *id;
+    snd_ctl_elem_info_t *info;
+
+    snd_ctl_elem_id_alloca(&id);
+    snd_ctl_elem_info_alloca(&info);
+
+    snd_ctl_elem_id_set_interface(id, SND_CTL_ELEM_IFACE_MIXER);
+    snd_ctl_elem_id_set_name(id, name);
+    snd_ctl_elem_info_set_id(info, id);
+
+    int ret = snd_ctl_elem_info(mHandle, info);
+    if (ret < 0) {
+        LOGE("Control '%s' cannot get element info: %d", name, ret);
+        return BAD_VALUE;
+    }
+
+    max = snd_ctl_elem_info_get_max(info);
+
+    return NO_ERROR;
+}
+#endif // AUDIO_MODEM_TI
+
 status_t ALSAControl::get(const char *name, unsigned int &value, int index)
 {
     if (!mHandle) {

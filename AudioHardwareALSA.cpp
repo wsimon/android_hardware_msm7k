@@ -125,11 +125,45 @@ status_t AudioHardwareALSA::initCheck()
 
 status_t AudioHardwareALSA::setVoiceVolume(float volume)
 {
+#ifdef AUDIO_MODEM_TI
+    #define VOICE_IN_CALL_VOLUME_NAME "DAC Voice Digital Downlink Volume"
+
+    status_t error = NO_ERROR;
+    unsigned int vol, minVol, maxVol;
+
+    ALSAControl control("hw:00");
+
+    error = control.getmin(VOICE_IN_CALL_VOLUME_NAME, minVol);
+    if (error != NO_ERROR) {
+        LOGE("Error getting minimum in call volume: %s", strerror(error));
+        goto failure;
+    }
+    error = control.getmax(VOICE_IN_CALL_VOLUME_NAME, maxVol);
+    if (error != NO_ERROR) {
+        LOGE("Error getting maximum in call volume: %s", strerror(error));
+        goto failure;
+    }
+    LOGV("%s: minVol: %d maxVol: %d", __FUNCTION__,
+         minVol, maxVol);
+
+    // Make sure volume is between bounds.
+    vol = minVol + volume * (maxVol - minVol);
+    if (vol > maxVol) vol = maxVol;
+    if (vol < minVol) vol = minVol;
+
+    LOGV("%s: volume level to apply: %d", __FUNCTION__, vol);
+
+    error = control.set(VOICE_IN_CALL_VOLUME_NAME, vol, 0);
+
+failure:
+    return error;
+#else
     // The voice volume is used by the VOICE_CALL audio stream.
     if (mMixer)
         return mMixer->setVolume(AudioSystem::DEVICE_OUT_EARPIECE, volume, volume);
     else
         return INVALID_OPERATION;
+#endif
 }
 
 status_t AudioHardwareALSA::setMasterVolume(float volume)

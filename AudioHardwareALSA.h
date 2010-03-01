@@ -120,7 +120,10 @@ public:
     status_t                set(const char *name, unsigned int value, int index = -1);
 
     status_t                set(const char *name, const char *);
-
+#ifdef AUDIO_MODEM_TI
+    status_t                getmin(const char *name, unsigned int &max);
+    status_t                getmax(const char *name, unsigned int &min);
+#endif
 private:
     snd_ctl_t *             mHandle;
 };
