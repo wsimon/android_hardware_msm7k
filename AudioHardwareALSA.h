@@ -99,6 +99,9 @@ public:
     status_t                setMasterGain(float gain);
 
     status_t                setVolume(uint32_t device, float left, float right);
+    #ifdef AUDIO_MODEM_TI
+    status_t                setVoiceVolume(float volume);
+    #endif
     status_t                setGain(uint32_t device, float gain);
 
     status_t                setCaptureMuteState(uint32_t device, bool state);
