@@ -92,18 +92,24 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
                            (char *)buffer + sent,
                            snd_pcm_bytes_to_frames(mHandle->handle, bytes - sent));
         if (n < 0) {
-            /* for debugging, lets just print the specific error we catch */
-            if (n == -EPIPE) {
-                LOGE("ERROR EPIPE\n");
-            }
-            else if (n == -EBADFD) {
+            if (n == -EBADFD) {
+                /* if there is such a problem, re-open the device to recover, then return immediately.
+                   we should not try to re-send again */
                 LOGE("ERROR EBADFD\n");
+                mHandle->module->open(mHandle, mHandle->curDev, mHandle->curMode);
+                if (aDev && aDev->recover) aDev->recover(aDev, n);
+                if (n) return static_cast<ssize_t>(n);
             }
-            if (mHandle->handle) {
+            else if (mHandle->handle) {
                 // snd_pcm_recover() will return 0 if successful in recovering from
                 // an error, or -errno if the error was unrecoverable.
+                if (n == -EPIPE) {
+                    /* EPIPE is usually seen while we wait for the standby timer to expire
+                       on the last active track, standby timer is currently 3 seconds, so you
+                       should only see this during the specific case where we are waiting for standby*/
+                    LOGD("INFO: EPIPE\n");
+                }
                 n = snd_pcm_recover(mHandle->handle, n, 1);
-
 
                 if (aDev && aDev->recover) aDev->recover(aDev, n);
 
