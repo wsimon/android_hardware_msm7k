@@ -278,8 +278,9 @@ status_t setHardwareParams(alsa_handle_t *handle)
 #endif
 
     // Make sure we have at least the size we originally wanted
-    err = snd_pcm_hw_params_set_buffer_size(handle->handle, hardwareParams,
-            bufferSize);
+    err = snd_pcm_hw_params_set_buffer_size_near(handle->handle, hardwareParams,
+            &bufferSize);
+
     if (err < 0) {
         LOGE("Unable to set buffer size to %d:  %s",
                 (int)bufferSize, snd_strerror(err));
