@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include <sys/time.h>
 
 #define LOG_TAG "AudioHardwareALSA"
 #include <utils/Log.h>
@@ -76,6 +77,14 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
         mPowerLock = true;
     }
 
+	/* check if handle is still valid, otherwise we are coming out of standby */
+	if(mHandle->handle == NULL) {
+         nsecs_t previously = systemTime();
+	     mHandle->module->open(mHandle, mHandle->curDev, mHandle->curMode);
+         nsecs_t delta = systemTime() - previously;
+         LOGE("RE-OPEN AFTER STANDBY:: took %llu msecs\n", ns2ms(delta));
+	}
+
     acoustic_device_t *aDev = acoustics();
 
     // For output, we will pass the data on to the acoustics module, but the actual
@@ -93,8 +102,8 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
                            snd_pcm_bytes_to_frames(mHandle->handle, bytes - sent));
         if (n < 0) {
             if (n == -EBADFD) {
-                /* if there is such a problem, re-open the device to recover, then return immediately.
-                   we should not try to re-send again */
+                /* if there is such a problem, re-open the device to recover,
+                then return immediately. we should not try to re-send again */
                 LOGE("ERROR EBADFD\n");
                 mHandle->module->open(mHandle, mHandle->curDev, mHandle->curMode);
                 if (aDev && aDev->recover) aDev->recover(aDev, n);
@@ -105,8 +114,9 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
                 // an error, or -errno if the error was unrecoverable.
                 if (n == -EPIPE) {
                     /* EPIPE is usually seen while we wait for the standby timer to expire
-                       on the last active track, standby timer is currently 3 seconds, so you
-                       should only see this during the specific case where we are waiting for standby*/
+                    on the last active track, standby timer is currently 3 seconds, so you
+                    should only see this during the specific case
+                    where we are waiting for standby*/
                     LOGD("INFO: EPIPE\n");
                 }
                 n = snd_pcm_recover(mHandle->handle, n, 1);
@@ -157,6 +167,17 @@ status_t AudioStreamOutALSA::standby()
 
     snd_pcm_drain (mHandle->handle);
 
+    /* save state of mHandle->handle so we can re-use it
+    after coming out of standby */
+
+    /* no need to save state yet, keep it simple for now
+    all state info we need is maintained in mHandle,
+    otherwise we will reuse defaults. */
+
+    /* now close it so we can reach off while idle */
+    LOGE("CALLING STANDBY\n");
+    mHandle->module->close(mHandle);
+
     if (mPowerLock) {
         release_wake_lock ("AudioOutLock");
         mPowerLock = false;
@@ -170,7 +191,10 @@ status_t AudioStreamOutALSA::standby()
 uint32_t AudioStreamOutALSA::latency() const
 {
     // Android wants latency in milliseconds.
-    return USEC_TO_MSEC (mHandle->latency);
+//    return USEC_TO_MSEC (mHandle->latency);
+
+    /* ugly hack, add to the teams technical debt */
+    return 20;
 }
 
 }       // namespace android
