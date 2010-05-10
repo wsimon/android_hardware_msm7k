@@ -1362,8 +1362,6 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy)
                 device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_BLUETOOTH_SCO_CARKIT;
                 if (device) break;
             }
-            device = mAvailableOutputDevices; // & AudioSystem::DEVICE_OUT_FM_SPEAKER;
-            if (device) break;
             device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_SPEAKER;
             if (device == 0) {
                 LOGE("getDeviceForStrategy() speaker device not found");
