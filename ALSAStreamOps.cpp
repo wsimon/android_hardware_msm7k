@@ -208,7 +208,7 @@ size_t ALSAStreamOps::bufferSize() const
     for (size_t i = 1; (bytes & ~i) != 0; i<<=1)
         bytes &= ~i;
 
-    return (1024 * 4); //bytes;
+    return bytes;
 }
 
 int ALSAStreamOps::format() const
