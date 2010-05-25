@@ -200,8 +200,8 @@ ALSAMixer::ALSAMixer()
 {
     int err;
 
-    initMixer (&mMixer[SND_PCM_STREAM_PLAYBACK], "AndroidOut");
-    initMixer (&mMixer[SND_PCM_STREAM_CAPTURE], "AndroidIn");
+    initMixer (&mMixer[SND_PCM_STREAM_PLAYBACK], "AndroidPlayback");
+    initMixer (&mMixer[SND_PCM_STREAM_CAPTURE], "AndroidCapture");
 
     snd_mixer_selem_id_t *sid;
     snd_mixer_selem_id_alloca(&sid);
