@@ -69,9 +69,9 @@ mixerMasterProp[SND_PCM_STREAM_LAST+1] =
 
 static alsa_properties_t
 mixerProp[][SND_PCM_STREAM_LAST+1] = {
-    ALSA_PROP(AudioSystem::DEVICE_OUT_EARPIECE, "earpiece", "Earpiece", "Capture"),
+    ALSA_PROP(AudioSystem::DEVICE_OUT_EARPIECE, "earpiece", "Earpiece", "Analog"),
     ALSA_PROP(AudioSystem::DEVICE_OUT_SPEAKER, "speaker", "Speaker",  ""),
-    ALSA_PROP(AudioSystem::DEVICE_OUT_WIRED_HEADSET, "headset", "Headphone", "Capture"),
+    ALSA_PROP(AudioSystem::DEVICE_OUT_WIRED_HEADSET, "headset", "Headset", "Analog"),
     ALSA_PROP(AudioSystem::DEVICE_OUT_BLUETOOTH_SCO, "bluetooth.sco", "Bluetooth", "Bluetooth Capture"),
     ALSA_PROP(AudioSystem::DEVICE_OUT_BLUETOOTH_A2DP, "bluetooth.a2dp", "Bluetooth A2DP", "Bluetooth A2DP Capture"),
 //    ALSA_PROP(AudioSystem::DEVICE_OUT_FM_HEADPHONE, "fm", "FM", ""),
@@ -420,8 +420,44 @@ status_t ALSAMixer::setCaptureMuteState(uint32_t device, bool state)
                         state ? "enable" : "disable", info->name);
                     return INVALID_OPERATION;
                 }
+            } else {
+                //is capture element has volume else return failure
+                if(!snd_mixer_selem_has_capture_volume(info->elem)) {
+                    LOGE("Element: %s doesn't have volume control",info->name);
+                    return INVALID_OPERATION;
+                } else {
+                    //Is all the channels are joined
+                    if(snd_mixer_selem_has_capture_volume_joined(info->elem)) {
+                        //change all channels volume to 0
+                        if (state) {
+                            // muting
+                            snd_mixer_selem_set_capture_volume_all(info->elem, 0);
+                        } else {
+                            //unmuting
+                            snd_mixer_selem_set_capture_volume_all(info->elem, info->volume);
+                        }
+                    } else {
+                        //snd_mixer_selem_channel_id_t chan_id;
+                        for(int chan_id = SND_MIXER_SCHN_FRONT_LEFT;
+                                chan_id <= SND_MIXER_SCHN_LAST;
+                                chan_id++) {
+                            // check channel is present
+                            if(snd_mixer_selem_has_capture_channel(info->elem,
+                                        (snd_mixer_selem_channel_id_t)chan_id)) {
+                                if (state) {
+                                    //make the volume to 0, incase of mute
+                                    snd_mixer_selem_set_capture_volume(info->elem,
+                                            (snd_mixer_selem_channel_id_t)chan_id, 0);
+                                } else {
+                                    //restore the volume incase of unmute
+                                    snd_mixer_selem_set_capture_volume(info->elem,
+                                            (snd_mixer_selem_channel_id_t)chan_id, info->volume);
+                                }
+                            }
+                        }
+                    }
+                }
             }
-
             info->mute = state;
         }
 
