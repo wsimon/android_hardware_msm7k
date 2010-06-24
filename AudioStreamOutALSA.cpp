@@ -126,8 +126,10 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
                 if (n) return static_cast<ssize_t>(n);
             }
         }
-        else
+        else {
             sent += static_cast<ssize_t>(snd_pcm_frames_to_bytes(mHandle->handle, n));
+            framesRendered += sent;
+        }
 
     } while (mHandle->handle && sent < bytes);
 
@@ -142,7 +144,6 @@ status_t AudioStreamOutALSA::dump(int fd, const Vector<String16>& args)
 status_t AudioStreamOutALSA::open(int mode)
 {
     AutoMutex lock(mLock);
-
     return ALSAStreamOps::open(mode);
 }
 
@@ -151,6 +152,7 @@ status_t AudioStreamOutALSA::close()
     AutoMutex lock(mLock);
 
     snd_pcm_drain (mHandle->handle);
+    framesRendered = 0;
     ALSAStreamOps::close();
 
     if (mPowerLock) {
@@ -177,7 +179,7 @@ status_t AudioStreamOutALSA::standby()
     /* now close it so we can reach off while idle */
     LOGE("CALLING STANDBY\n");
     mHandle->module->close(mHandle);
-
+    framesRendered = 0;
     if (mPowerLock) {
         release_wake_lock ("AudioOutLock");
         mPowerLock = false;
@@ -195,6 +197,12 @@ uint32_t AudioStreamOutALSA::latency() const
 
     /* ugly hack, add to the teams technical debt */
     return 20;
+}
+
+status_t AudioStreamOutALSA::getRenderPosition(uint32_t *dspFrames)
+{
+    *dspFrames = framesRendered;
+    return NO_ERROR;
 }
 
 }       // namespace android

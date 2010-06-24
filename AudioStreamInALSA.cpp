@@ -83,9 +83,15 @@ ssize_t AudioStreamInALSA::read(void *buffer, ssize_t bytes)
                 if (n < 0) {
                     n = snd_pcm_recover(mHandle->handle, n, 0);
 
+                    /* there was an error, count this whole buffer as lost frames */
+                    framesLost += frames;
+
                     if (aDev && aDev->recover) aDev->recover(aDev, n);
-                } else
+                } else {
+                    /* not an error, but not all the requested frames were read */
+                    framesLost += frames - n;
                     n = snd_pcm_prepare(mHandle->handle);
+                  }
             }
             return static_cast<ssize_t>(n);
         }
@@ -104,6 +110,7 @@ status_t AudioStreamInALSA::open(int mode)
     AutoMutex lock(mLock);
 
     status_t status = ALSAStreamOps::open(mode);
+    framesLost = 0;
 
     acoustic_device_t *aDev = acoustics();
 
@@ -136,7 +143,7 @@ status_t AudioStreamInALSA::close()
 status_t AudioStreamInALSA::standby()
 {
     AutoMutex lock(mLock);
-
+    framesLost = 0;
     if (mPowerLock) {
         release_wake_lock ("AudioInLock");
         mPowerLock = false;
@@ -144,6 +151,14 @@ status_t AudioStreamInALSA::standby()
 
     return NO_ERROR;
 }
+
+unsigned int  AudioStreamInALSA::getInputFramesLost() const{
+    //@TODO: need to reset the counter each time this is called
+    // realistically, this should be zero anyways unless there was
+    // an error
+    return framesLost;
+}
+
 
 status_t AudioStreamInALSA::setAcousticParams(void *params)
 {
