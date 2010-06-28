@@ -266,6 +266,27 @@ status_t AudioHardwareALSA::getMicMute(bool *state)
     return NO_ERROR;
 }
 
+// non-default implementation
+size_t AudioHardwareALSA::getInputBufferSize(uint32_t sampleRate, int format, int channelCount)
+{
+    if (!(sampleRate == 8000 ||
+        sampleRate == 16000 ||
+        sampleRate == 11025)) {
+        LOGW("getInputBufferSize bad sampling rate: %d", sampleRate);
+        return 0;
+    }
+    if (format != AudioSystem::PCM_16_BIT) {
+        LOGW("getInputBufferSize bad format: %d", format);
+        return 0;
+    }
+    if (channelCount != 1) {
+        LOGW("getInputBufferSize bad channel count: %d", channelCount);
+        return 0;
+    }
+
+    return 320;
+}
+
 status_t AudioHardwareALSA::dump(int fd, const Vector<String16>& args)
 {
     return NO_ERROR;
