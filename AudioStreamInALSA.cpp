@@ -152,14 +152,20 @@ status_t AudioStreamInALSA::standby()
     return NO_ERROR;
 }
 
-unsigned int  AudioStreamInALSA::getInputFramesLost() const{
-    //@TODO: need to reset the counter each time this is called
-    // realistically, this should be zero anyways unless there was
-    // an error
-    return framesLost;
+void AudioStreamInALSA::resetFramesLost()
+{
+    AutoMutex lock(mLock);
+    framesLost = 0;
 }
 
-
+unsigned int AudioStreamInALSA::getInputFramesLost() const
+{
+    unsigned int count = framesLost;
+    // Stupid interface wants us to have a side effect of clearing the count
+    // but is defined as a const to prevent such a thing.
+    ((AudioStreamInALSA *)this)->resetFramesLost();
+    return count;
+}
 status_t AudioStreamInALSA::setAcousticParams(void *params)
 {
     AutoMutex lock(mLock);

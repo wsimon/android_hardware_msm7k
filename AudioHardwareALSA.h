@@ -279,6 +279,7 @@ public:
 
 private:
     AudioSystem::audio_in_acoustics mAcoustics;
+    void                resetFramesLost();
     unsigned int framesLost;
 };
 
