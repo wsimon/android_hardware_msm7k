@@ -214,6 +214,8 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
                             mOutputs.valueFor(mHardwareOutput)->isUsedByStrategy(STRATEGY_DTMF)) {
                          newDevice = device;
                     }
+                } else if (device == AudioSystem::DEVICE_OUT_AUX_DIGITAL) {
+                    newDevice = device;
                 } /* else if (device == AudioSystem::DEVICE_OUT_TTY) {
                     LOGV("setDeviceConnectionState() tty device");
                     // if connecting a wired headset, we check the following by order of priority
@@ -390,7 +392,9 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
                                mOutputs.valueFor(mHardwareOutput)->isUsedByStrategy(STRATEGY_DTMF)){
                         newDevice = getDeviceForStrategy(STRATEGY_DTMF);
                     }
-                }/* else if (device == AudioSystem::DEVICE_OUT_TTY) {
+                } else if (device == AudioSystem::DEVICE_OUT_AUX_DIGITAL) {
+                    newDevice = getDeviceForStrategy(STRATEGY_MEDIA);
+                } /* else if (device == AudioSystem::DEVICE_OUT_TTY) {
                     LOGV("setDeviceConnectionState() tty device");
                     if (wasUsedforPhone &&
                         (mPhoneState == AudioSystem::MODE_IN_CALL ||
