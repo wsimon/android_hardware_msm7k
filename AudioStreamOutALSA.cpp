@@ -187,7 +187,9 @@ uint32_t AudioStreamOutALSA::latency() const
 // the output has exited standby
 status_t AudioStreamOutALSA::getRenderPosition(uint32_t *dspFrames)
 {
-    *dspFrames = mFrameCount;
+    //*dspFrames = mFrameCount;
+    *dspFrames = 0;
+
     return NO_ERROR;
 }
 

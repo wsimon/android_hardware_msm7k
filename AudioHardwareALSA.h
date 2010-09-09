@@ -219,6 +219,7 @@ public:
 
 private:
     uint32_t            mFrameCount;
+
 };
 
 class AudioStreamInALSA : public AudioStreamIn, public ALSAStreamOps
