@@ -41,6 +41,7 @@ static int s_device_close(hw_device_t*);
 static status_t s_init(alsa_device_t *, ALSAHandleList &);
 static status_t s_open(alsa_handle_t *, uint32_t, int);
 static status_t s_close(alsa_handle_t *);
+static status_t s_standby(alsa_handle_t *);
 static status_t s_route(alsa_handle_t *, uint32_t, int);
 
 static hw_module_methods_t s_module_methods = {
@@ -76,6 +77,7 @@ static int s_device_open(const hw_module_t* module, const char* name,
     dev->init = s_init;
     dev->open = s_open;
     dev->close = s_close;
+    dev->standby = s_standby;
     dev->route = s_route;
 
     *device = &dev->common;
@@ -521,6 +523,16 @@ static status_t s_close(alsa_handle_t *handle)
     }
 
     return err;
+}
+
+static status_t s_standby(alsa_handle_t *handle)
+{
+    //hw specific modules may choose to implement
+    //this differently to gain a power savings during
+    //standby
+    snd_pcm_drain (handle->handle);
+    return NO_ERROR;
+
 }
 
 static status_t s_route(alsa_handle_t *handle, uint32_t devices, int mode)

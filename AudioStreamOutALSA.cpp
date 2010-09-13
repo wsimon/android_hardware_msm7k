@@ -163,11 +163,8 @@ status_t AudioStreamOutALSA::standby()
 {
     AutoMutex lock(mLock);
 
-    snd_pcm_drain (mHandle->handle);
-
-    /* close it so we can reach off while idle */
     LOGE("CALLING STANDBY\n");
-    mHandle->module->close(mHandle);
+    mHandle->module->standby(mHandle);
     if (mPowerLock) {
         release_wake_lock ("AudioOutLock");
         mPowerLock = false;
