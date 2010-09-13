@@ -108,9 +108,12 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
             mHandle->module->open(mHandle, mHandle->curDev, mHandle->curMode);
 
             if (aDev && aDev->recover) aDev->recover(aDev, n);
+            //bail
+            if (n) return static_cast<ssize_t>(n);
         }
         else if (n < 0) {
             if (mHandle->handle) {
+
                 // snd_pcm_recover() will return 0 if successful in recovering from
                 // an error, or -errno if the error was unrecoverable.
                 n = snd_pcm_recover(mHandle->handle, n, 1);
@@ -162,6 +165,9 @@ status_t AudioStreamOutALSA::standby()
 
     snd_pcm_drain (mHandle->handle);
 
+    /* close it so we can reach off while idle */
+    LOGE("CALLING STANDBY\n");
+    mHandle->module->close(mHandle);
     if (mPowerLock) {
         release_wake_lock ("AudioOutLock");
         mPowerLock = false;
@@ -177,7 +183,7 @@ status_t AudioStreamOutALSA::standby()
 uint32_t AudioStreamOutALSA::latency() const
 {
     // Android wants latency in milliseconds.
-//    return USEC_TO_MSEC (mHandle->latency);
+    // return USEC_TO_MSEC (mHandle->latency);
 
     /* ugly hack, add to the teams technical debt */
     return 20;
