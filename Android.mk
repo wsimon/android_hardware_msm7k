@@ -11,6 +11,7 @@ ifeq ($(strip $(BOARD_USES_ALSA_AUDIO)),true)
 
   LOCAL_ARM_MODE := arm
   LOCAL_CFLAGS := -D_POSIX_SOURCE
+
   ifeq ($(strip $(BOARD_USES_TI_OMAP3_MODEM_AUDIO)),true)
     LOCAL_CFLAGS += -DAUDIO_MODEM_TI
   endif
@@ -51,12 +52,14 @@ endif
   LOCAL_CFLAGS := -D_POSIX_SOURCE
 
 ifeq ($(BOARD_HAVE_BLUETOOTH),true)
-        LOCAL_CFLAGS += -DWITH_A2DP
+    LOCAL_CFLAGS += -DWITH_A2DP
 endif
 
   LOCAL_SRC_FILES := AudioPolicyManagerALSA.cpp
 
   LOCAL_MODULE := libaudiopolicy
+
+  LOCAL_WHOLE_STATIC_LIBRARIES += libaudiopolicybase
 
   LOCAL_SHARED_LIBRARIES := \
     libcutils \

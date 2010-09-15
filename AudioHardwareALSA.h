@@ -99,9 +99,11 @@ public:
     status_t                setMasterGain(float gain);
 
     status_t                setVolume(uint32_t device, float left, float right);
+
     #ifdef AUDIO_MODEM_TI
     status_t                setVoiceVolume(float volume);
     #endif
+
     status_t                setGain(uint32_t device, float gain);
 
     status_t                setCaptureMuteState(uint32_t device, bool state);
@@ -111,6 +113,7 @@ public:
 
 private:
     snd_mixer_t *           mMixer[SND_PCM_STREAM_LAST+1];
+
 };
 
 class ALSAControl
@@ -123,10 +126,12 @@ public:
     status_t                set(const char *name, unsigned int value, int index = -1);
 
     status_t                set(const char *name, const char *);
+
 #ifdef AUDIO_MODEM_TI
     status_t                getmin(const char *name, unsigned int &max);
     status_t                getmax(const char *name, unsigned int &min);
 #endif
+
 private:
     snd_ctl_t *             mHandle;
 };
@@ -213,7 +218,7 @@ public:
     status_t            close();
 
 private:
-    uint32_t framesRendered;
+    uint32_t            mFrameCount;
 };
 
 class AudioStreamInALSA : public AudioStreamIn, public ALSAStreamOps
@@ -261,15 +266,10 @@ public:
         return ALSAStreamOps::getParameters(keys);
     }
 
-    /**
-     * Return the amount of input frames lost in the audio driver since the last
-     * call of this function. Audio driver is expected to reset the value to 0
-     * and restart counting upon returning the current value by this function call.
-     * Such loss typically occurs when the user space process is blocked longer
-     * than the capacity of audio driver buffers.
-     *
-     * Unit: the number of input audio frames
-     */
+    // Return the amount of input frames lost in the audio driver since the last call of this function.
+    // Audio driver is expected to reset the value to 0 and restart counting upon returning the current value by this function call.
+    // Such loss typically occurs when the user space process is blocked longer than the capacity of audio driver buffers.
+    // Unit: the number of input audio frames
     virtual unsigned int  getInputFramesLost() const;
 
     status_t            setAcousticParams(void* params);
@@ -278,9 +278,10 @@ public:
     status_t            close();
 
 private:
-    AudioSystem::audio_in_acoustics mAcoustics;
     void                resetFramesLost();
-    unsigned int framesLost;
+
+    unsigned int        mFramesLost;
+    AudioSystem::audio_in_acoustics mAcoustics;
 };
 
 class AudioHardwareALSA : public AudioHardwareBase

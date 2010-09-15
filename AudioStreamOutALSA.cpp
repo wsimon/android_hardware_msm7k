@@ -48,7 +48,8 @@ static const int DEFAULT_SAMPLE_RATE = ALSA_DEFAULT_SAMPLE_RATE;
 // ----------------------------------------------------------------------------
 
 AudioStreamOutALSA::AudioStreamOutALSA(AudioHardwareALSA *parent, alsa_handle_t *handle) :
-    ALSAStreamOps(parent, handle)
+    ALSAStreamOps(parent, handle),
+    mFrameCount(0)
 {
 }
 
@@ -100,25 +101,18 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
         n = snd_pcm_writei(mHandle->handle,
                            (char *)buffer + sent,
                            snd_pcm_bytes_to_frames(mHandle->handle, bytes - sent));
-        if (n < 0) {
-            if (n == -EBADFD) {
-                /* if there is such a problem, re-open the device to recover,
-                then return immediately. we should not try to re-send again */
-                LOGE("ERROR EBADFD\n");
-                mHandle->module->open(mHandle, mHandle->curDev, mHandle->curMode);
-                if (aDev && aDev->recover) aDev->recover(aDev, n);
-                if (n) return static_cast<ssize_t>(n);
-            }
-            else if (mHandle->handle) {
+
+        if (n == -EBADFD) {
+            // Somehow the stream is in a bad state. The driver probably
+            // has a bug and snd_pcm_recover() doesn't seem to handle this.
+            mHandle->module->open(mHandle, mHandle->curDev, mHandle->curMode);
+
+            if (aDev && aDev->recover) aDev->recover(aDev, n);
+        }
+        else if (n < 0) {
+            if (mHandle->handle) {
                 // snd_pcm_recover() will return 0 if successful in recovering from
                 // an error, or -errno if the error was unrecoverable.
-                if (n == -EPIPE) {
-                    /* EPIPE is usually seen while we wait for the standby timer to expire
-                    on the last active track, standby timer is currently 3 seconds, so you
-                    should only see this during the specific case
-                    where we are waiting for standby*/
-                    LOGD("INFO: EPIPE\n");
-                }
                 n = snd_pcm_recover(mHandle->handle, n, 1);
 
                 if (aDev && aDev->recover) aDev->recover(aDev, n);
@@ -127,8 +121,8 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
             }
         }
         else {
+            mFrameCount += n;
             sent += static_cast<ssize_t>(snd_pcm_frames_to_bytes(mHandle->handle, n));
-            framesRendered += sent;
         }
 
     } while (mHandle->handle && sent < bytes);
@@ -152,7 +146,6 @@ status_t AudioStreamOutALSA::close()
     AutoMutex lock(mLock);
 
     snd_pcm_drain (mHandle->handle);
-    framesRendered = 0;
     ALSAStreamOps::close();
 
     if (mPowerLock) {
@@ -169,21 +162,12 @@ status_t AudioStreamOutALSA::standby()
 
     snd_pcm_drain (mHandle->handle);
 
-    /* save state of mHandle->handle so we can re-use it
-    after coming out of standby */
-
-    /* no need to save state yet, keep it simple for now
-    all state info we need is maintained in mHandle,
-    otherwise we will reuse defaults. */
-
-    /* now close it so we can reach off while idle */
-    LOGE("CALLING STANDBY\n");
-    mHandle->module->close(mHandle);
-    framesRendered = 0;
     if (mPowerLock) {
         release_wake_lock ("AudioOutLock");
         mPowerLock = false;
     }
+
+    mFrameCount = 0;
 
     return NO_ERROR;
 }
@@ -199,9 +183,11 @@ uint32_t AudioStreamOutALSA::latency() const
     return 20;
 }
 
+// return the number of audio frames written by the audio dsp to DAC since
+// the output has exited standby
 status_t AudioStreamOutALSA::getRenderPosition(uint32_t *dspFrames)
 {
-    *dspFrames = framesRendered;
+    *dspFrames = mFrameCount;
     return NO_ERROR;
 }
 
