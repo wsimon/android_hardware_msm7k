@@ -42,7 +42,17 @@ public:
                 AudioPolicyManagerALSA(AudioPolicyClientInterface *clientInterface);
         virtual ~AudioPolicyManagerALSA();
 
-        // Nothing currently different between the Base implementation.
+        status_t setDeviceConnectionState(AudioSystem::audio_devices device,
+                                                          AudioSystem::device_connection_state state,
+                                                          const char *device_address);
+        /* get Fm input source */
+        audio_io_handle_t getFMInput(int inputSource,
+                                            uint32_t samplingRate,
+                                            uint32_t format,
+                                            uint32_t channels,
+                                            AudioSystem::audio_in_acoustics acoustics);
+
+        audio_io_handle_t mfmInput;       // FM input handler
 };
 
 };
