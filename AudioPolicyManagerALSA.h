@@ -52,6 +52,15 @@ public:
                                             uint32_t channels,
                                             AudioSystem::audio_in_acoustics acoustics);
 
+        /* AudioPolicyManagerBase.cpp, in the stopoutoutput, setOutputDevice
+         * is called by force(with flag true) which is causing Core is not going
+         * to off/ret when A2DP is paused, Because output stream is activated
+         * during the A2DP pause (opens PCM stream).
+         * So we are overriding the stopOutput in Alsa vesrion of policy manger
+         * now setOutputDevice is called with flag false.
+         * */
+        status_t stopOutput(audio_io_handle_t output, AudioSystem::stream_type stream);
+
         audio_io_handle_t mfmInput;       // FM input handler
 };
 
