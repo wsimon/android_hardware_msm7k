@@ -298,6 +298,58 @@ audio_io_handle_t AudioPolicyManagerALSA::getFMInput(int inputSource,
     mInputs.add(input, inputDesc);
     return input;
 }
+
+status_t AudioPolicyManagerALSA::stopOutput(audio_io_handle_t output, AudioSystem::stream_type stream)
+{
+        LOGV("stopOutput() output %d, stream %d", output, stream);
+        ssize_t index = mOutputs.indexOfKey(output);
+        if (index < 0) {
+        LOGW("stopOutput() unknow output %d", output);
+        return BAD_VALUE;
+        }
+        AudioOutputDescriptor *outputDesc = mOutputs.valueAt(index);
+        routing_strategy strategy = getStrategy((AudioSystem::stream_type)stream);
+
+        // handle special case for sonification while in call
+        if (mPhoneState == AudioSystem::MODE_IN_CALL) {
+        handleIncallSonification(stream, false, false);
+        }
+        if (outputDesc->isUsedByStrategy(strategy)) {
+        // decrement usage count of this stream on the output
+        outputDesc->changeRefCount(stream, -1);
+        if (!outputDesc->isUsedByStrategy(strategy)) {
+        // if the stream is the last of its strategy to use this output, change routing
+        // in the following order or priority:
+        // PHONE > SONIFICATION > MEDIA > DTMF
+        uint32_t newDevice = 0;
+        if (outputDesc->isUsedByStrategy(STRATEGY_PHONE)) {
+            newDevice = getDeviceForStrategy(STRATEGY_PHONE);
+        } else if (outputDesc->isUsedByStrategy(STRATEGY_SONIFICATION)) {
+            newDevice = getDeviceForStrategy(STRATEGY_SONIFICATION);
+        } else if (mPhoneState == AudioSystem::MODE_IN_CALL) {
+            newDevice = getDeviceForStrategy(STRATEGY_PHONE);
+        } else if (outputDesc->isUsedByStrategy(STRATEGY_MEDIA)) {
+            newDevice = getDeviceForStrategy(STRATEGY_MEDIA);
+        } else if (outputDesc->isUsedByStrategy(STRATEGY_DTMF)) {
+            newDevice = getDeviceForStrategy(STRATEGY_DTMF);
+        }
+              // apply routing change if necessary.
+              // insert a delay of 2 times the audio hardware latency to ensure PCM
+              // buffers in audio flinger and audio hardware are emptied before the
+              // routing change is executed.
+              setOutputDevice(mHardwareOutput, newDevice, false, mOutputs.valueFor(mHardwareOutput)->mLatency*2);
+        }
+        // store time at which the last music track was stopped - see computeVolume()
+	   if (stream == AudioSystem::MUSIC) {
+               mMusicStopTime = systemTime();
+           }
+           return NO_ERROR;
+           } else {
+              LOGW("stopOutput() refcount is already 0 for output %d", output);
+              return INVALID_OPERATION;
+       }
+}
+
 // ----------------------------------------------------------------------------
 // AudioPolicyManagerALSA
 // ----------------------------------------------------------------------------
