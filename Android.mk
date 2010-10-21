@@ -15,8 +15,16 @@ ifeq ($(strip $(BOARD_USES_ALSA_AUDIO)),true)
   ifeq ($(strip $(TARGET_BOARD_PLATFORM)), omap3)
     ifeq ($(strip $(BOARD_USES_TI_OMAP_MODEM_AUDIO)),true)
        LOCAL_CFLAGS += -DAUDIO_MODEM_TI
+       LOCAL_CFLAGS += -DPLATFORM_OMAP3
     endif
   endif
+  ifeq ($(strip $(TARGET_BOARD_PLATFORM)), omap4)
+    ifeq ($(strip $(BOARD_USES_TI_OMAP_MODEM_AUDIO)),true)
+       LOCAL_CFLAGS += -DAUDIO_MODEM_TI
+       LOCAL_CFLAGS += -DPLATFORM_OMAP4
+    endif
+  endif
+
 
   LOCAL_C_INCLUDES += external/alsa-lib/include
 
