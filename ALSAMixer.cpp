@@ -133,6 +133,8 @@ inCallVolumeProp[] = {
 };
 #endif
 #ifdef PLATFORM_OMAP4
+#define WORKAROUND_AVOID_VOICE_VOLUME_SATURATION  1
+#define WORKAROUND_MAX_VOICE_VOLUME               120
 static alsa_incall_vol_properties_t
 inCallVolumeProp[] = {
     ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_EARPIECE,
@@ -299,6 +301,9 @@ ALSAMixer::ALSAMixer()
 #ifdef AUDIO_MODEM_TI
     ALSAControl control("hw:00");
     status_t error;
+#if (WORKAROUND_AVOID_VOICE_VOLUME_SATURATION == 1)
+    LOGV("Workaround: Voice call max volume limited to: %d", WORKAROUND_MAX_VOICE_VOLUME);
+#endif
     for (int i = 0; inCallVolumeProp[i].device; i++) {
         mixer_incall_vol_info_t *info = inCallVolumeProp[i].mInfo = new mixer_incall_vol_info_t;
 
@@ -310,6 +315,9 @@ ALSAMixer::ALSAMixer()
         error = control.getmin(info->name, info->min);
         error = control.getmax(info->name, info->max);
 
+#if (WORKAROUND_AVOID_VOICE_VOLUME_SATURATION == 1)
+        info->max = WORKAROUND_MAX_VOICE_VOLUME;
+#endif
 
         if (error < 0) {
             LOGV("Mixer: In Call Volume '%s': not found", info->name);
