@@ -126,6 +126,11 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
 
         // request routing change if necessary
         uint32_t newDevice = getNewDevice(mHardwareOutput, false);
+
+        // force routing if device disconnection occurs when stream is stopped
+        if ((newDevice == 0) && (state == AudioSystem::DEVICE_STATE_UNAVAILABLE))
+            newDevice = getDeviceForStrategy(STRATEGY_MEDIA, false);
+
 #ifdef WITH_A2DP
         checkOutputForAllStrategies(newDevice);
         // A2DP outputs must be closed after checkOutputForAllStrategies() is executed
