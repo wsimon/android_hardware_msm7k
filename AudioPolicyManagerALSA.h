@@ -45,6 +45,7 @@ public:
         status_t setDeviceConnectionState(AudioSystem::audio_devices device,
                                                           AudioSystem::device_connection_state state,
                                                           const char *device_address);
+        uint32_t getDeviceForStrategy(routing_strategy strategy, bool fromCache = true);
         /* get Fm input source */
         audio_io_handle_t getFMInput(int inputSource,
                                             uint32_t samplingRate,
