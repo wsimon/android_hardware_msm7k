@@ -135,6 +135,8 @@ inCallVolumeProp[] = {
 #ifdef PLATFORM_OMAP4
 #define WORKAROUND_AVOID_VOICE_VOLUME_SATURATION  1
 #define WORKAROUND_MAX_VOICE_VOLUME               120
+#define WORKAROUND_SET_VOICE_VOLUME_MIN           1
+#define WORKAROUND_MIN_VOICE_VOLUME               90
 static alsa_incall_vol_properties_t
 inCallVolumeProp[] = {
     ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_EARPIECE,
@@ -304,6 +306,9 @@ ALSAMixer::ALSAMixer()
 #if (WORKAROUND_AVOID_VOICE_VOLUME_SATURATION == 1)
     LOGV("Workaround: Voice call max volume limited to: %d", WORKAROUND_MAX_VOICE_VOLUME);
 #endif
+#if (WORKAROUND_SET_VOICE_VOLUME_MIN == 1)
+    LOGV("Workaround: Voice call min volume limited to: %d", WORKAROUND_MIN_VOICE_VOLUME);
+#endif
     for (int i = 0; inCallVolumeProp[i].device; i++) {
         mixer_incall_vol_info_t *info = inCallVolumeProp[i].mInfo = new mixer_incall_vol_info_t;
 
@@ -317,6 +322,9 @@ ALSAMixer::ALSAMixer()
 
 #if (WORKAROUND_AVOID_VOICE_VOLUME_SATURATION == 1)
         info->max = WORKAROUND_MAX_VOICE_VOLUME;
+#endif
+#if (WORKAROUND_SET_VOICE_VOLUME_MIN == 1)
+        info->min = WORKAROUND_MIN_VOICE_VOLUME;
 #endif
 
         if (error < 0) {
