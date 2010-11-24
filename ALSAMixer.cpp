@@ -117,7 +117,7 @@ struct alsa_incall_vol_properties_t
     {\
         dev, "alsa.incallvolume." name, default, NULL\
     }
-
+#ifdef PLATFORM_OMAP3
 static alsa_incall_vol_properties_t
 inCallVolumeProp[] = {
     ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_EARPIECE,
@@ -131,6 +131,22 @@ inCallVolumeProp[] = {
     ALSA_INCALL_VOLUME_PROP(static_cast<AudioSystem::audio_devices>(0),
                             "", "")
 };
+#endif
+#ifdef PLATFORM_OMAP4
+static alsa_incall_vol_properties_t
+inCallVolumeProp[] = {
+    ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_EARPIECE,
+                            "earpiece", "DL1 Voice Playback Volume"),
+    ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_SPEAKER,
+                            "speaker", "DL2 Voice Playback Volume"),
+    ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_WIRED_HEADSET,
+                            "headset", "DL1 Voice Playback Volume"),
+    ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_BLUETOOTH_SCO,
+                            "bluetooth.sco", "DL1 Voice Playback Volume"),
+    ALSA_INCALL_VOLUME_PROP(static_cast<AudioSystem::audio_devices>(0),
+                            "", "")
+};
+#endif
 #endif
 
 static int initMixer (snd_mixer_t **mixer, const char *name)
@@ -294,9 +310,13 @@ ALSAMixer::ALSAMixer()
         error = control.getmin(info->name, info->min);
         error = control.getmax(info->name, info->max);
 
-        LOGV("Mixer: In Call Volume '%s' %s vol. %d min. %d max. %d",
-             info->name, (error < 0) ? "not found" : "found %s vol. %d min. %d max. %d",
-             info->volume, info->min, info->max);
+
+        if (error < 0) {
+            LOGV("Mixer: In Call Volume '%s': not found", info->name);
+        } else {
+            LOGV("Mixer: In Call Volume '%s': vol. %d min. %d max. %d",
+                    info->name, info->volume, info->min, info->max);
+        }
     }
 #endif
 
