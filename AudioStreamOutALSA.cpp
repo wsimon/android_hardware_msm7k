@@ -185,10 +185,7 @@ status_t AudioStreamOutALSA::standby()
 uint32_t AudioStreamOutALSA::latency() const
 {
     // Android wants latency in milliseconds.
-    // return USEC_TO_MSEC (mHandle->latency);
-
-    /* ugly hack, add to the teams technical debt */
-    return 20;
+    return USEC_TO_MSEC (mHandle->latency);
 }
 
 // return the number of audio frames written by the audio dsp to DAC since
