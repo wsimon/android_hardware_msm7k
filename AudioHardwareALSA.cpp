@@ -125,18 +125,14 @@ status_t AudioHardwareALSA::initCheck()
 
 status_t AudioHardwareALSA::setVoiceVolume(float volume)
 {
-#ifdef AUDIO_MODEM_TI
-    if (mMixer)
-        return mMixer->setVoiceVolume(volume);
-    else
-        return INVALID_OPERATION;
-#else
-    // The voice volume is used by the VOICE_CALL audio stream.
-    if (mMixer)
+    if ((mALSADevice) && (mALSADevice->voicevolume))
+        // allow hw specific modules to implement voice call volume
+        return mALSADevice->voicevolume(volume);
+    else if (mMixer)
+        // The voice volume is used by the VOICE_CALL audio stream.
         return mMixer->setVolume(AudioSystem::DEVICE_OUT_EARPIECE, volume, volume);
     else
         return INVALID_OPERATION;
-#endif
 }
 
 status_t AudioHardwareALSA::setMasterVolume(float volume)
