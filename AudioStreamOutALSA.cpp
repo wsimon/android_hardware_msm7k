@@ -98,6 +98,10 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
     status_t          err;
 
     do {
+        // for hotpluggable devices (e.g. hdmi)
+        if (!mHandle->handle)
+		return sent;
+
         n = snd_pcm_writei(mHandle->handle,
                            (char *)buffer + sent,
                            snd_pcm_bytes_to_frames(mHandle->handle, bytes - sent));
@@ -124,8 +128,10 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
             }
         }
         else {
-            mFrameCount += n;
-            sent += static_cast<ssize_t>(snd_pcm_frames_to_bytes(mHandle->handle, n));
+            if (mHandle->handle) {
+                mFrameCount += n;
+                sent += static_cast<ssize_t>(snd_pcm_frames_to_bytes(mHandle->handle, n));
+            }
         }
 
     } while (mHandle->handle && sent < bytes);
