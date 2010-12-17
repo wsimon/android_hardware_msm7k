@@ -110,6 +110,7 @@ static alsa_handle_t _defaultsOut = {
     sampleRate  : DEFAULT_SAMPLE_RATE,
     latency     : 200000, // Desired Delay in usec
     bufferSize  : DEFAULT_SAMPLE_RATE / 5, // Desired Number of samples
+    mmap        : 0,
     modPrivate  : 0,
 };
 
@@ -124,6 +125,7 @@ static alsa_handle_t _defaultsIn = {
     sampleRate  : AudioRecord::DEFAULT_SAMPLE_RATE,
     latency     : 250000, // Desired Delay in usec
     bufferSize  : 2048, // Desired Number of samples
+    mmap        : 0,
     modPrivate  : 0,
 };
 
