@@ -173,7 +173,13 @@ status_t ALSAStreamOps::setParameters(const String8& keyValuePairs)
     }
 
     if (param.size()) {
-        status = BAD_VALUE;
+        // default action: fwd the kvp's to the module incase it wants to take action
+        if (mParent->mALSADevice->set) {
+            status = mParent->mALSADevice->set(keyValuePairs);
+            return status;
+        } else {
+           return BAD_VALUE;
+        }
     }
     return status;
 }
