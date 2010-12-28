@@ -132,7 +132,7 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
             newDevice = getDeviceForStrategy(STRATEGY_MEDIA, false);
 
 #ifdef WITH_A2DP
-        checkOutputForAllStrategies(newDevice);
+        checkOutputForAllStrategies();
         // A2DP outputs must be closed after checkOutputForAllStrategies() is executed
         if (state == AudioSystem::DEVICE_STATE_UNAVAILABLE && AudioSystem::isA2dpDevice(device)) {
             closeA2dpOutputs();
@@ -194,6 +194,8 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
             }
         }
         else {
+           // We will remove this once FM support is fully functional
+#if 0
            if (device == AudioSystem::DEVICE_IN_FM_ANALOG) {
                routing_strategy strategy = getStrategy((AudioSystem::stream_type)3);
                uint32_t curOutdevice = getDeviceForStrategy(strategy);
@@ -245,6 +247,7 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
                     mpClientInterface->setFMRxActive(false);
                 }
              }
+#endif
       }
         return NO_ERROR;
     }
