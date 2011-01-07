@@ -384,9 +384,9 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy,
                  }
            }
 
-            if (device2 == 0) {
-                device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_FM_TRANSMIT;
-            }
+//            if (device2 == 0) {
+//                device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_FM_TRANSMIT;
+//            }
 
             if (device2 == 0) {
                 device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_SPEAKER;
@@ -408,6 +408,7 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy,
          return device;
 }
 
+#if 0
 audio_io_handle_t AudioPolicyManagerALSA::getFMInput(int inputSource,
                                     uint32_t samplingRate,
                                     uint32_t format,
@@ -458,6 +459,7 @@ audio_io_handle_t AudioPolicyManagerALSA::getFMInput(int inputSource,
     mInputs.add(input, inputDesc);
     return input;
 }
+#endif
 
 status_t AudioPolicyManagerALSA::stopOutput(audio_io_handle_t output, AudioSystem::stream_type stream)
 {
