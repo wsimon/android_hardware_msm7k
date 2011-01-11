@@ -43,6 +43,7 @@ struct alsa_handle_t {
     uint32_t            devices;
     uint32_t            curDev;
     int                 curMode;
+    uint32_t            curChannels;
     snd_pcm_t *         handle;
     snd_pcm_format_t    format;
     uint32_t            channels;
@@ -59,7 +60,7 @@ struct alsa_device_t {
     hw_device_t common;
 
     status_t (*init)(alsa_device_t *, ALSAHandleList &);
-    status_t (*open)(alsa_handle_t *, uint32_t, int);
+    status_t (*open)(alsa_handle_t *, uint32_t, int , uint32_t);
     status_t (*close)(alsa_handle_t *);
     status_t (*standby)(alsa_handle_t *);
     status_t (*route)(alsa_handle_t *, uint32_t, int);

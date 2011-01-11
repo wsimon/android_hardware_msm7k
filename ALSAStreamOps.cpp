@@ -318,7 +318,7 @@ void ALSAStreamOps::close()
 //
 status_t ALSAStreamOps::open(int mode)
 {
-    return mParent->mALSADevice->open(mHandle, mHandle->curDev, mode);
+    return mParent->mALSADevice->open(mHandle, mHandle->curDev, mode, mHandle->curChannels);
 }
 
 }       // namespace android

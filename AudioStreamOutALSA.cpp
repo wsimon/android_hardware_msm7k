@@ -81,7 +81,7 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
     /* check if handle is still valid, otherwise we are coming out of standby */
     if(mHandle->handle == NULL) {
          nsecs_t previously = systemTime();
-         mHandle->module->open(mHandle, mHandle->curDev, mHandle->curMode);
+         mHandle->module->open(mHandle, mHandle->curDev, mHandle->curMode, mHandle->curChannels);
          nsecs_t delta = systemTime() - previously;
          LOGE("RE-OPEN AFTER STANDBY:: took %llu msecs\n", ns2ms(delta));
     }
@@ -115,7 +115,7 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
         if (n == -EBADFD) {
             // Somehow the stream is in a bad state. The driver probably
             // has a bug and snd_pcm_recover() doesn't seem to handle this.
-            mHandle->module->open(mHandle, mHandle->curDev, mHandle->curMode);
+            mHandle->module->open(mHandle, mHandle->curDev, mHandle->curMode, mHandle->curChannels);
 
             if (aDev && aDev->recover) aDev->recover(aDev, n);
             //bail
