@@ -12,6 +12,20 @@ ifeq ($(strip $(BOARD_USES_ALSA_AUDIO)),true)
   LOCAL_ARM_MODE := arm
   LOCAL_CFLAGS := -D_POSIX_SOURCE
 
+  ifeq ($(strip $(TARGET_BOARD_PLATFORM)), omap3)
+    ifeq ($(strip $(BOARD_USES_TI_OMAP_MODEM_AUDIO)),true)
+       LOCAL_CFLAGS += -DAUDIO_MODEM_TI
+       LOCAL_CFLAGS += -DPLATFORM_OMAP3
+    endif
+  endif
+  ifeq ($(strip $(TARGET_BOARD_PLATFORM)), omap4)
+    ifeq ($(strip $(BOARD_USES_TI_OMAP_MODEM_AUDIO)),true)
+       LOCAL_CFLAGS += -DAUDIO_MODEM_TI
+       LOCAL_CFLAGS += -DPLATFORM_OMAP4
+    endif
+  endif
+
+
   LOCAL_C_INCLUDES += external/alsa-lib/include
 
   LOCAL_SRC_FILES := \
@@ -49,7 +63,7 @@ endif
   LOCAL_CFLAGS := -D_POSIX_SOURCE
 
 ifeq ($(BOARD_HAVE_BLUETOOTH),true)
-  LOCAL_CFLAGS += -DWITH_A2DP
+    LOCAL_CFLAGS += -DWITH_A2DP
 endif
 
   LOCAL_SRC_FILES := AudioPolicyManagerALSA.cpp
@@ -90,6 +104,8 @@ endif
 
   LOCAL_MODULE:= alsa.default
   LOCAL_MODULE_TAGS := optional
+  
+  
 
   include $(BUILD_SHARED_LIBRARY)
 

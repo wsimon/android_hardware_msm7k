@@ -100,6 +100,11 @@ public:
     status_t                setMasterGain(float gain);
 
     status_t                setVolume(uint32_t device, float left, float right);
+
+    #ifdef AUDIO_MODEM_TI
+    status_t                setVoiceVolume(float volume);
+    #endif
+
     status_t                setGain(uint32_t device, float gain);
 
     status_t                setCaptureMuteState(uint32_t device, bool state);
@@ -109,6 +114,7 @@ public:
 
 private:
     snd_mixer_t *           mMixer[SND_PCM_STREAM_LAST+1];
+
 };
 
 class ALSAControl
@@ -121,6 +127,11 @@ public:
     status_t                set(const char *name, unsigned int value, int index = -1);
 
     status_t                set(const char *name, const char *);
+
+#ifdef AUDIO_MODEM_TI
+    status_t                getmin(const char *name, unsigned int &max);
+    status_t                getmax(const char *name, unsigned int &min);
+#endif
 
 private:
     snd_ctl_t *             mHandle;
@@ -209,6 +220,7 @@ public:
 
 private:
     uint32_t            mFrameCount;
+
 };
 
 class AudioStreamInALSA : public AudioStreamIn, public ALSAStreamOps
@@ -313,7 +325,7 @@ public:
 
     // Returns audio input buffer size according to parameters passed or 0 if one of the
     // parameters is not supported
-    //virtual size_t    getInputBufferSize(uint32_t sampleRate, int format, int channels);
+    virtual size_t    getInputBufferSize(uint32_t sampleRate, int format, int channels);
 
     /** This method creates and opens the audio hardware output stream */
     virtual AudioStreamOut* openOutputStream(
