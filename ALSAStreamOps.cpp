@@ -175,9 +175,11 @@ status_t ALSAStreamOps::setParameters(const String8& keyValuePairs)
     if (param.size()) {
         // default action: fwd the kvp's to the module incase it wants to take action
         if (mParent->mALSADevice->set) {
-            status = mParent->mALSADevice->set(keyValuePairs);
-            return status;
+           status = mParent->mALSADevice->set(keyValuePairs);
+           LOGI("setParameters() %s, %d", keyValuePairs.string(), (int)status);
+           return status;
         } else {
+           LOGI("setParameters() :: BAD_VALUE");
            return BAD_VALUE;
         }
     }

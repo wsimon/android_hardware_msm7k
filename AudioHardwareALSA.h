@@ -317,7 +317,8 @@ public:
     virtual status_t    getMicMute(bool* state);
 
     // set/get global audio parameters
-    //virtual status_t    setParameters(const String8& keyValuePairs);
+    virtual status_t    setParameters(const String8& keyValuePairs);
+
     //virtual String8     getParameters(const String8& keys);
 
     // Returns audio input buffer size according to parameters passed or 0 if one of the

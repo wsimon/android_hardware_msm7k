@@ -164,6 +164,18 @@ status_t AudioHardwareALSA::setMode(int mode)
     return status;
 }
 
+status_t AudioHardwareALSA::setParameters(const String8& keyValuePairs)
+{
+    if (mALSADevice && mALSADevice->set){
+        LOGI("setParameters got %s", keyValuePairs.string());
+        return mALSADevice->set(keyValuePairs);
+    }
+    else {
+        LOGE("setParameters INVALID OPERATION");
+        return INVALID_OPERATION;
+    }
+}
+
 AudioStreamOut *
 AudioHardwareALSA::openOutputStream(uint32_t devices,
                                     int *format,
