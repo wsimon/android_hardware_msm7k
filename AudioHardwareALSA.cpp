@@ -63,7 +63,7 @@ static void ALSAErrorHandler(const char *file,
     l = snprintf(buf, BUFSIZ, "%s:%i:(%s) ", file, line, function);
     vsnprintf(buf + l, BUFSIZ - l, fmt, arg);
     buf[BUFSIZ-1] = '\0';
-    LOGE("ALSA: %s", buf);
+    LOG(LOG_ERROR, "ALSALib", "%s", buf);
     va_end(arg);
 }
 
@@ -162,8 +162,7 @@ status_t AudioHardwareALSA::setMode(int mode)
                 if (status != NO_ERROR)
                     break;
             }
-        }
-    }
+        }    }
 
     return status;
 }
