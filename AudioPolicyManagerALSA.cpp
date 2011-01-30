@@ -194,7 +194,8 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
             }
         }
         else {
-           if (device == AudioSystem::DEVICE_IN_FM_ANALOG) {
+#ifdef HAVE_FM_RADIO
+           if (device == AudioSystem::DEVICE_IN_FM_RX) {
                routing_strategy strategy = getStrategy((AudioSystem::stream_type)3);
                uint32_t curOutdevice = getDeviceForStrategy(strategy);
                /* If A2DP headset is connected then route FM to Headset */
@@ -208,7 +209,7 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
                    // uint32_t curOutdevice = getDeviceForStrategy(strategy);
 
                    /* Get the new input descriptor for FM Rx In */
-                    mfmInput = getFMInput(AUDIO_SOURCE_FM_ANALOG,8000,1,
+                    mfmInput = getFMInput(AUDIO_SOURCE_FM_RX,8000,1,
                            AudioSystem::CHANNEL_IN_MONO,(AudioSystem::audio_in_acoustics)7);
 
                    /* Forcely open the current output device again for
@@ -244,8 +245,9 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
                     */
                     mpClientInterface->setFMRxActive(false);
                 }
-             }
-      }
+            }
+#endif
+        }
         return NO_ERROR;
     }
 
@@ -381,9 +383,11 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy,
                  }
            }
 
+#ifdef HAVE_FM_RADIO
             if (device2 == 0) {
                 device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_FM_TRANSMIT;
             }
+#endif
 
             if (device2 == 0) {
                 device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_SPEAKER;
@@ -405,6 +409,7 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy,
          return device;
 }
 
+#ifdef HAVE_FM_RADIO
 audio_io_handle_t AudioPolicyManagerALSA::getFMInput(int inputSource,
                                     uint32_t samplingRate,
                                     uint32_t format,
@@ -414,8 +419,8 @@ audio_io_handle_t AudioPolicyManagerALSA::getFMInput(int inputSource,
     audio_io_handle_t input = 0;
     uint32_t device = 0;
 
-    if (inputSource == AUDIO_SOURCE_FM_ANALOG)
-         device = AudioSystem::DEVICE_IN_FM_ANALOG;
+    if (inputSource == AUDIO_SOURCE_FM_RX)
+         device = AudioSystem::DEVICE_IN_FM_RX;
     else {
          /* wrong input source */
          return 0;
@@ -455,6 +460,7 @@ audio_io_handle_t AudioPolicyManagerALSA::getFMInput(int inputSource,
     mInputs.add(input, inputDesc);
     return input;
 }
+#endif
 
 status_t AudioPolicyManagerALSA::stopOutput(audio_io_handle_t output, AudioSystem::stream_type stream)
 {
