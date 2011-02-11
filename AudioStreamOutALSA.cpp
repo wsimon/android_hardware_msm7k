@@ -100,12 +100,18 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
     do {
         // for hotpluggable devices (e.g. hdmi)
         if (!mHandle->handle)
-		return sent;
+		    return sent;
 
-        n = snd_pcm_writei(mHandle->handle,
-                           (char *)buffer + sent,
-                           snd_pcm_bytes_to_frames(mHandle->handle, bytes - sent));
-
+        if (mHandle->mmap) {
+            n = snd_pcm_mmap_writei(mHandle->handle,
+                                   (char *)buffer + sent,
+                                   snd_pcm_bytes_to_frames(mHandle->handle, bytes - sent));
+        }
+        else {
+            n = snd_pcm_writei(mHandle->handle,
+                               (char *)buffer + sent,
+                               snd_pcm_bytes_to_frames(mHandle->handle, bytes - sent));
+        }
         if (n == -EBADFD) {
             // Somehow the stream is in a bad state. The driver probably
             // has a bug and snd_pcm_recover() doesn't seem to handle this.
