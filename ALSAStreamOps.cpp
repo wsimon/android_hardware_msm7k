@@ -203,9 +203,6 @@ uint32_t ALSAStreamOps::sampleRate() const
 size_t ALSAStreamOps::bufferSize() const
 {
     snd_pcm_uframes_t bufferSize = mHandle->bufferSize;
-    snd_pcm_uframes_t periodSize;
-
-    snd_pcm_get_params(mHandle->handle, &bufferSize, &periodSize);
 
     size_t bytes = static_cast<size_t>(snd_pcm_frames_to_bytes(mHandle->handle, bufferSize));
 
@@ -214,7 +211,7 @@ size_t ALSAStreamOps::bufferSize() const
     // power of 2. This might be for OSS compatibility.
     for (size_t i = 1; (bytes & ~i) != 0; i<<=1)
         bytes &= ~i;
-
+    LOGI("buffer size (bytes) to AF = %d", bytes);
     return bytes;
 }
 
