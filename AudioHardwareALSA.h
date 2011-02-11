@@ -63,6 +63,7 @@ struct alsa_device_t {
     status_t (*close)(alsa_handle_t *);
     status_t (*standby)(alsa_handle_t *);
     status_t (*route)(alsa_handle_t *, uint32_t, int);
+    status_t (*voicevolume)(float);
 };
 
 /**
@@ -102,10 +103,6 @@ public:
 
     status_t                setVolume(uint32_t device, float left, float right);
 
-    #ifdef AUDIO_MODEM_TI
-    status_t                setVoiceVolume(float volume);
-    #endif
-
     status_t                setGain(uint32_t device, float gain);
 
     status_t                setCaptureMuteState(uint32_t device, bool state);
@@ -129,10 +126,8 @@ public:
 
     status_t                set(const char *name, const char *);
 
-#ifdef AUDIO_MODEM_TI
     status_t                getmin(const char *name, unsigned int &max);
     status_t                getmax(const char *name, unsigned int &min);
-#endif
 
 private:
     snd_ctl_t *             mHandle;
