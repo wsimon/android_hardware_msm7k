@@ -162,7 +162,7 @@ status_t ALSAStreamOps::setParameters(const String8& keyValuePairs)
     String8 keyfm = String8("fm_off");
     String8 valuefm;
     if (param.get(keyfm, valuefm) == NO_ERROR) {
-        mParent->mALSADevice->close(mHandle);
+        mParent->mALSADevice->standby(mHandle);
         param.remove(keyfm);
         return status;
     }
