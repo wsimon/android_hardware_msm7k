@@ -30,7 +30,6 @@
 
 #include <cutils/properties.h>
 #include <media/AudioRecord.h>
-#include <hardware_legacy/power.h>
 
 #include "AudioHardwareALSA.h"
 
@@ -72,11 +71,6 @@ status_t AudioStreamOutALSA::setVolume(float left, float right)
 ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
 {
     AutoMutex lock(mLock);
-
-    if (!mPowerLock) {
-        acquire_wake_lock (PARTIAL_WAKE_LOCK, "AudioOutLock");
-        mPowerLock = true;
-    }
 
 	/* check if handle is still valid, otherwise we are coming out of standby */
 	if(mHandle->handle == NULL) {
@@ -163,11 +157,6 @@ status_t AudioStreamOutALSA::close()
     snd_pcm_drain (mHandle->handle);
     ALSAStreamOps::close();
 
-    if (mPowerLock) {
-        release_wake_lock ("AudioOutLock");
-        mPowerLock = false;
-    }
-
     return NO_ERROR;
 }
 
@@ -181,11 +170,6 @@ status_t AudioStreamOutALSA::standby()
         mHandle->module->standby(mHandle);
     else
         snd_pcm_drain (mHandle->handle);
-
-    if (mPowerLock) {
-        release_wake_lock ("AudioOutLock");
-        mPowerLock = false;
-    }
 
     mFrameCount = 0;
 

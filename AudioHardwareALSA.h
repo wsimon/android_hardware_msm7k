@@ -163,7 +163,6 @@ protected:
     alsa_handle_t *         mHandle;
 
     Mutex                   mLock;
-    bool                    mPowerLock;
 };
 
 // ----------------------------------------------------------------------------
