@@ -132,7 +132,7 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
             newDevice = getDeviceForStrategy(STRATEGY_MEDIA, false);
 
 #ifdef WITH_A2DP
-        checkOutputForAllStrategies(newDevice);
+        checkOutputForAllStrategies();
         // A2DP outputs must be closed after checkOutputForAllStrategies() is executed
         if (state == AudioSystem::DEVICE_STATE_UNAVAILABLE && AudioSystem::isA2dpDevice(device)) {
             closeA2dpOutputs();
