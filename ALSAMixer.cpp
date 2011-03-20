@@ -1,6 +1,6 @@
 /* ALSAMixer.cpp
  **
- ** Copyright 2008-2009 Wind River Systems
+ ** Copyright 2008-2010 Wind River Systems
  **
  ** Licensed under the Apache License, Version 2.0 (the "License");
  ** you may not use this file except in compliance with the License.
@@ -95,62 +95,6 @@ struct mixer_info_t
     char              name[ALSA_NAME_MAX];
 };
 
-#ifdef AUDIO_MODEM_TI
-struct mixer_incall_vol_info_t
-{
-    unsigned int      min;
-    unsigned int      max;
-    unsigned int      volume;
-    char              name[ALSA_NAME_MAX];
-};
-
-struct alsa_incall_vol_properties_t
-{
-    const AudioSystem::audio_devices device;
-    const char                       *propName;
-    const char                       *propDefault;
-    mixer_incall_vol_info_t          *mInfo;
-};
-
-
-#define ALSA_INCALL_VOLUME_PROP(dev, name, default) \
-    {\
-        dev, "alsa.incallvolume." name, default, NULL\
-    }
-#ifdef PLATFORM_OMAP3
-static alsa_incall_vol_properties_t
-inCallVolumeProp[] = {
-    ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_EARPIECE,
-                            "earpiece", "DAC Voice Digital Downlink Volume"),
-    ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_SPEAKER,
-                            "speaker", "DAC Voice Digital Downlink Volume"),
-    ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_WIRED_HEADSET,
-                            "headset", "DAC Voice Digital Downlink Volume"),
-    ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_BLUETOOTH_SCO,
-                            "bluetooth.sco", "BT Digital Playback Volume"),
-    ALSA_INCALL_VOLUME_PROP(static_cast<AudioSystem::audio_devices>(0),
-                            "", "")
-};
-#endif
-#ifdef PLATFORM_OMAP4
-#define WORKAROUND_AVOID_VOICE_VOLUME_SATURATION  1
-#define WORKAROUND_MAX_VOICE_VOLUME               120
-static alsa_incall_vol_properties_t
-inCallVolumeProp[] = {
-    ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_EARPIECE,
-                            "earpiece", "DL1 Voice Playback Volume"),
-    ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_SPEAKER,
-                            "speaker", "DL2 Voice Playback Volume"),
-    ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_WIRED_HEADSET,
-                            "headset", "DL1 Voice Playback Volume"),
-    ALSA_INCALL_VOLUME_PROP(AudioSystem::DEVICE_OUT_BLUETOOTH_SCO,
-                            "bluetooth.sco", "DL1 Voice Playback Volume"),
-    ALSA_INCALL_VOLUME_PROP(static_cast<AudioSystem::audio_devices>(0),
-                            "", "")
-};
-#endif
-#endif
-
 static int initMixer (snd_mixer_t **mixer, const char *name)
 {
     int err;
@@ -225,6 +169,8 @@ ALSAMixer::ALSAMixer()
 
     for (int i = 0; i <= SND_PCM_STREAM_LAST; i++) {
 
+        if (!mMixer[i]) continue;
+
         mixer_info_t *info = mixerMasterProp[i].mInfo = new mixer_info_t;
 
         property_get (mixerMasterProp[i].propName,
@@ -297,37 +243,6 @@ ALSAMixer::ALSAMixer()
             LOGV("Mixer: route '%s' %s.", info->name, info->elem ? "found" : "not found");
         }
     }
-
-#ifdef AUDIO_MODEM_TI
-    ALSAControl control("hw:00");
-    status_t error;
-#if (WORKAROUND_AVOID_VOICE_VOLUME_SATURATION == 1)
-    LOGV("Workaround: Voice call max volume limited to: %d", WORKAROUND_MAX_VOICE_VOLUME);
-#endif
-    for (int i = 0; inCallVolumeProp[i].device; i++) {
-        mixer_incall_vol_info_t *info = inCallVolumeProp[i].mInfo = new mixer_incall_vol_info_t;
-
-        property_get (inCallVolumeProp[i].propName,
-                      info->name,
-                      inCallVolumeProp[i].propDefault);
-
-        error = control.get(info->name, info->volume, 0);
-        error = control.getmin(info->name, info->min);
-        error = control.getmax(info->name, info->max);
-
-#if (WORKAROUND_AVOID_VOICE_VOLUME_SATURATION == 1)
-        info->max = WORKAROUND_MAX_VOICE_VOLUME;
-#endif
-
-        if (error < 0) {
-            LOGV("Mixer: In Call Volume '%s': not found", info->name);
-        } else {
-            LOGV("Mixer: In Call Volume '%s': vol. %d min. %d max. %d",
-                    info->name, info->volume, info->min, info->max);
-        }
-    }
-#endif
-
     LOGV("mixer initialized.");
 }
 
@@ -449,8 +364,8 @@ status_t ALSAMixer::setCaptureMuteState(uint32_t device, bool state)
                         state ? "enable" : "disable", info->name);
                     return INVALID_OPERATION;
                 }
-
             }
+
             info->mute = state;
         }
 
@@ -514,36 +429,5 @@ status_t ALSAMixer::getPlaybackMuteState(uint32_t device, bool *state)
 
     return BAD_VALUE;
 }
-
-#ifdef AUDIO_MODEM_TI
-status_t ALSAMixer::setVoiceVolume(float volume)
-{
-    status_t error = NO_ERROR;
-    mixer_incall_vol_info_t *info = NULL;
-
-    ALSAControl control("hw:00");
-
-    for (int j = 0; inCallVolumeProp[j].device; j++) {
-
-        info = inCallVolumeProp[j].mInfo;
-
-        // Make sure volume is between bounds.
-        info->volume = info->min + volume * (info->max - info->min);
-        if (info->volume > info->max) info->volume = info->max;
-        if (info->volume < info->min) info->volume = info->min;
-
-        LOGV("%s: in call volume level to apply: %d", info->name, info->volume);
-
-        error = control.set(info->name, info->volume, 0);
-        if (error < 0) {
-            LOGE("%s: error applying in call volume: %d", info->name, info->volume);
-            return error;
-        }
-    }
-
-    return NO_ERROR;
-
-}
-#endif
 
 };        // namespace android

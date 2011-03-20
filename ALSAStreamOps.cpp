@@ -159,15 +159,9 @@ status_t ALSAStreamOps::setParameters(const String8& keyValuePairs)
     status_t status = NO_ERROR;
     int device;
     LOGV("setParameters() %s", keyValuePairs.string());
-    String8 keyfm = String8("fm_off");
-    String8 valuefm;
-    if (param.get(keyfm, valuefm) == NO_ERROR) {
-        mParent->mALSADevice->close(mHandle);
-        param.remove(keyfm);
-        return status;
-    }
 
     if (param.getInt(key, device) == NO_ERROR) {
+        AutoMutex lock(mLock);
         mParent->mALSADevice->route(mHandle, (uint32_t)device, mParent->mode());
         param.remove(key);
     }

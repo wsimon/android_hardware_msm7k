@@ -1,6 +1,6 @@
 /* AudioHardwareALSA.cpp
  **
- ** Copyright 2008-2009 Wind River Systems
+ ** Copyright 2008-2010 Wind River Systems
  **
  ** Licensed under the Apache License, Version 2.0 (the "License");
  ** you may not use this file except in compliance with the License.
@@ -117,26 +117,22 @@ AudioHardwareALSA::~AudioHardwareALSA()
 
 status_t AudioHardwareALSA::initCheck()
 {
-    if (mALSADevice && mMixer && mMixer->isValid())
-        return NO_ERROR;
-    else
+    if (!mALSADevice)
         return NO_INIT;
+
+    if (!mMixer || !mMixer->isValid())
+        LOGW("ALSA Mixer is not valid. AudioFlinger will do software volume control.");
+
+    return NO_ERROR;
 }
 
 status_t AudioHardwareALSA::setVoiceVolume(float volume)
 {
-#ifdef AUDIO_MODEM_TI
-    if (mMixer)
-        return mMixer->setVoiceVolume(volume);
-    else
-        return INVALID_OPERATION;
-#else
     // The voice volume is used by the VOICE_CALL audio stream.
     if (mMixer)
         return mMixer->setVolume(AudioSystem::DEVICE_OUT_EARPIECE, volume, volume);
     else
         return INVALID_OPERATION;
-#endif
 }
 
 status_t AudioHardwareALSA::setMasterVolume(float volume)
@@ -157,12 +153,14 @@ status_t AudioHardwareALSA::setMode(int mode)
         if (status == NO_ERROR) {
             // take care of mode change.
             for(ALSAHandleList::iterator it = mDeviceList.begin();
-                it != mDeviceList.end(); ++it) {
-                status = mALSADevice->route(&(*it), it->curDev, mode);
-                if (status != NO_ERROR)
-                    break;
-            }
-        }    }
+                it != mDeviceList.end(); ++it)
+                if (it->curDev) {
+                    status = mALSADevice->route(&(*it), it->curDev, mode);
+                    if (status != NO_ERROR)
+                        break;
+                }
+        }
+    }
 
     return status;
 }
@@ -174,8 +172,6 @@ AudioHardwareALSA::openOutputStream(uint32_t devices,
                                     uint32_t *sampleRate,
                                     status_t *status)
 {
-    AutoMutex lock(mLock);
-
     LOGD("openOutputStream called for devices: 0x%08x", devices);
 
     status_t err = BAD_VALUE;
@@ -205,7 +201,6 @@ AudioHardwareALSA::openOutputStream(uint32_t devices,
 void
 AudioHardwareALSA::closeOutputStream(AudioStreamOut* out)
 {
-    AutoMutex lock(mLock);
     delete out;
 }
 
@@ -217,8 +212,6 @@ AudioHardwareALSA::openInputStream(uint32_t devices,
                                    status_t *status,
                                    AudioSystem::audio_in_acoustics acoustics)
 {
-    AutoMutex lock(mLock);
-
     status_t err = BAD_VALUE;
     AudioStreamInALSA *in = 0;
 
@@ -242,31 +235,9 @@ AudioHardwareALSA::openInputStream(uint32_t devices,
     return in;
 }
 
-// non-default implementation
-size_t AudioHardwareALSA::getInputBufferSize(uint32_t sampleRate, int format, int channelCount)
-{
-    if (!(sampleRate == 8000 ||
-        sampleRate == 16000 ||
-        sampleRate == 11025)) {
-        LOGW("getInputBufferSize bad sampling rate: %d", sampleRate);
-        return 0;
-    }
-    if (format != AudioSystem::PCM_16_BIT) {
-        LOGW("getInputBufferSize bad format: %d", format);
-        return 0;
-    }
-    if (channelCount != 1) {
-        LOGW("getInputBufferSize bad channel count: %d", channelCount);
-        return 0;
-    }
-
-    return 320;
-}
-
 void
 AudioHardwareALSA::closeInputStream(AudioStreamIn* in)
 {
-    AutoMutex lock(mLock);
     delete in;
 }
 

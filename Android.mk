@@ -12,20 +12,6 @@ ifeq ($(strip $(BOARD_USES_ALSA_AUDIO)),true)
   LOCAL_ARM_MODE := arm
   LOCAL_CFLAGS := -D_POSIX_SOURCE
 
-  ifeq ($(strip $(TARGET_BOARD_PLATFORM)), omap3)
-    ifeq ($(strip $(BOARD_USES_TI_OMAP_MODEM_AUDIO)),true)
-       LOCAL_CFLAGS += -DAUDIO_MODEM_TI
-       LOCAL_CFLAGS += -DPLATFORM_OMAP3
-    endif
-  endif
-  ifeq ($(strip $(TARGET_BOARD_PLATFORM)), omap4)
-    ifeq ($(strip $(BOARD_USES_TI_OMAP_MODEM_AUDIO)),true)
-       LOCAL_CFLAGS += -DAUDIO_MODEM_TI
-       LOCAL_CFLAGS += -DPLATFORM_OMAP4
-    endif
-  endif
-
-
   LOCAL_C_INCLUDES += external/alsa-lib/include
 
   LOCAL_SRC_FILES := \
@@ -37,7 +23,6 @@ ifeq ($(strip $(BOARD_USES_ALSA_AUDIO)),true)
 	ALSAControl.cpp
 
   LOCAL_MODULE := libaudio
-  LOCAL_MODULE_TAGS := optional
 
   LOCAL_STATIC_LIBRARIES += libaudiointerface
 
@@ -63,13 +48,12 @@ endif
   LOCAL_CFLAGS := -D_POSIX_SOURCE
 
 ifeq ($(BOARD_HAVE_BLUETOOTH),true)
-    LOCAL_CFLAGS += -DWITH_A2DP
+  LOCAL_CFLAGS += -DWITH_A2DP
 endif
 
   LOCAL_SRC_FILES := AudioPolicyManagerALSA.cpp
 
   LOCAL_MODULE := libaudiopolicy
-  LOCAL_MODULE_TAGS := optional
 
   LOCAL_WHOLE_STATIC_LIBRARIES += libaudiopolicybase
 
@@ -102,10 +86,8 @@ endif
   	libasound \
   	liblog
 
-  LOCAL_MODULE:= alsa.default
   LOCAL_MODULE_TAGS := optional
-  
-  
+  LOCAL_MODULE:= alsa.default
 
   include $(BUILD_SHARED_LIBRARY)
 
@@ -125,8 +107,8 @@ endif
 
   LOCAL_SHARED_LIBRARIES := liblog
 
-  LOCAL_MODULE:= acoustics.default
   LOCAL_MODULE_TAGS := optional
+  LOCAL_MODULE:= acoustics.default
 
   include $(BUILD_SHARED_LIBRARY)
 

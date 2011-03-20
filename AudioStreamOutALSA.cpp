@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <dlfcn.h>
-#include <sys/time.h>
 
 #define LOG_TAG "AudioHardwareALSA"
 #include <utils/Log.h>
@@ -78,14 +77,6 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
         mPowerLock = true;
     }
 
-	/* check if handle is still valid, otherwise we are coming out of standby */
-	if(mHandle->handle == NULL) {
-         nsecs_t previously = systemTime();
-	     mHandle->module->open(mHandle, mHandle->curDev, mHandle->curMode);
-         nsecs_t delta = systemTime() - previously;
-         LOGE("RE-OPEN AFTER STANDBY:: took %llu msecs\n", ns2ms(delta));
-	}
-
     acoustic_device_t *aDev = acoustics();
 
     // For output, we will pass the data on to the acoustics module, but the actual
@@ -101,19 +92,15 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
         n = snd_pcm_writei(mHandle->handle,
                            (char *)buffer + sent,
                            snd_pcm_bytes_to_frames(mHandle->handle, bytes - sent));
-
         if (n == -EBADFD) {
             // Somehow the stream is in a bad state. The driver probably
             // has a bug and snd_pcm_recover() doesn't seem to handle this.
             mHandle->module->open(mHandle, mHandle->curDev, mHandle->curMode);
 
             if (aDev && aDev->recover) aDev->recover(aDev, n);
-            //bail
-            if (n) return static_cast<ssize_t>(n);
         }
         else if (n < 0) {
             if (mHandle->handle) {
-
                 // snd_pcm_recover() will return 0 if successful in recovering from
                 // an error, or -errno if the error was unrecoverable.
                 n = snd_pcm_recover(mHandle->handle, n, 1);
@@ -141,6 +128,7 @@ status_t AudioStreamOutALSA::dump(int fd, const Vector<String16>& args)
 status_t AudioStreamOutALSA::open(int mode)
 {
     AutoMutex lock(mLock);
+
     return ALSAStreamOps::open(mode);
 }
 
@@ -163,12 +151,7 @@ status_t AudioStreamOutALSA::standby()
 {
     AutoMutex lock(mLock);
 
-    if (mHandle->module->standby)
-    // allow hw specific modules to imlement unique standby
-    // if needed
-        mHandle->module->standby(mHandle);
-    else
-        snd_pcm_drain (mHandle->handle);
+    snd_pcm_drain (mHandle->handle);
 
     if (mPowerLock) {
         release_wake_lock ("AudioOutLock");
@@ -192,9 +175,7 @@ uint32_t AudioStreamOutALSA::latency() const
 // the output has exited standby
 status_t AudioStreamOutALSA::getRenderPosition(uint32_t *dspFrames)
 {
-    //*dspFrames = mFrameCount;
-    *dspFrames = 0;
-
+    *dspFrames = mFrameCount;
     return NO_ERROR;
 }
 

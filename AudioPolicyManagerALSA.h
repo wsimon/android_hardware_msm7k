@@ -42,29 +42,7 @@ public:
                 AudioPolicyManagerALSA(AudioPolicyClientInterface *clientInterface);
         virtual ~AudioPolicyManagerALSA();
 
-        status_t setDeviceConnectionState(AudioSystem::audio_devices device,
-                                                          AudioSystem::device_connection_state state,
-                                                          const char *device_address);
-        uint32_t getDeviceForStrategy(routing_strategy strategy, bool fromCache = true);
-#ifdef HAVE_FM_RADIO
-        /* get Fm input source */
-        audio_io_handle_t getFMInput(int inputSource,
-                                            uint32_t samplingRate,
-                                            uint32_t format,
-                                            uint32_t channels,
-                                            AudioSystem::audio_in_acoustics acoustics);
-#endif
-        /* AudioPolicyManagerBase.cpp, in the stopoutoutput, setOutputDevice
-         * is called by force(with flag true) which is causing Core is not going
-         * to off/ret when A2DP is paused, Because output stream is activated
-         * during the A2DP pause (opens PCM stream).
-         * So we are overriding the stopOutput in Alsa vesrion of policy manger
-         * now setOutputDevice is called with flag false.
-         * */
-        status_t stopOutput(audio_io_handle_t output, AudioSystem::stream_type stream);
-#ifdef HAVE_FM_RADIO
-        audio_io_handle_t mfmInput;       // FM input handler
-#endif
+        // Nothing currently different between the Base implementation.
 };
 
 };
