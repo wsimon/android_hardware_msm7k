@@ -29,6 +29,7 @@
 
 #include <cutils/properties.h>
 #include <media/AudioRecord.h>
+#include <hardware_legacy/power.h>
 
 #include "AudioHardwareALSA.h"
 
@@ -60,6 +61,11 @@ status_t AudioStreamInALSA::setGain(float gain)
 ssize_t AudioStreamInALSA::read(void *buffer, ssize_t bytes)
 {
     AutoMutex lock(mLock);
+
+    if (!mPowerLock) {
+        acquire_wake_lock (PARTIAL_WAKE_LOCK, "AudioInLock");
+        mPowerLock = true;
+    }
 
     acoustic_device_t *aDev = acoustics();
 
@@ -117,12 +123,23 @@ status_t AudioStreamInALSA::close()
 
     ALSAStreamOps::close();
 
+    if (mPowerLock) {
+        release_wake_lock ("AudioInLock");
+        mPowerLock = false;
+    }
+
     return NO_ERROR;
 }
 
 status_t AudioStreamInALSA::standby()
 {
     AutoMutex lock(mLock);
+
+    if (mPowerLock) {
+        release_wake_lock ("AudioInLock");
+        mPowerLock = false;
+    }
+
     return NO_ERROR;
 }
 
