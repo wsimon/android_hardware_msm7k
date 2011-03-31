@@ -61,6 +61,22 @@ public:
          * now setOutputDevice is called with flag false.
          * */
         status_t stopOutput(audio_io_handle_t output, AudioSystem::stream_type stream);
+        /* In AudioPolicyManagerBase.cpp, in the getinput method if the inputsource
+         * is AUDIO_SOURCE_VOICE_CALL the channels bitfield is filled with
+         * (CHANNEL_IN_VOICE_UPLINK | CHANNEL_IN_VOICE_DNLINK) which force voice call
+         * record to be stereo. If the inputsource is AUDIO_SOURCE_VOICE_UPLINK or
+         * AUDIO_SOURCE_VOICE_DOWNLINK the channels bitfiled is set respectively to
+         * CHANNEL_IN_VOICE_UPLINK or CHANNEL_IN_VOICE_DNLINK in this case the
+         * voice call record is mono.
+         * So we are overriding the inputsource in Alsa version of policy manager
+         * to use a new channel bit CHANNEL_IN_VOICE_UPLINK_DNLINK to have also
+         * voice call record in mono in case of inputsource AUDIO_SOURCE_VOICE_CALL.
+         * */
+        audio_io_handle_t getInput(int inputSource,
+                                        uint32_t samplingRate,
+                                        uint32_t format,
+                                        uint32_t channels,
+                                        AudioSystem::audio_in_acoustics acoustics);
 
         audio_io_handle_t mfmInput;       // FM input handler
 };

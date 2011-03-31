@@ -513,6 +513,68 @@ status_t AudioPolicyManagerALSA::stopOutput(audio_io_handle_t output, AudioSyste
        }
 }
 
+audio_io_handle_t AudioPolicyManagerALSA::getInput(int inputSource,
+                                    uint32_t samplingRate,
+                                    uint32_t format,
+                                    uint32_t channels,
+                                    AudioSystem::audio_in_acoustics acoustics)
+{
+    audio_io_handle_t input = 0;
+    uint32_t device = getDeviceForInputSource(inputSource);
+
+    LOGV("getInput() inputSource %d, samplingRate %d, format %d, channels %x, acoustics %x", inputSource, samplingRate, format, channels, acoustics);
+
+    if (device == 0) {
+        return 0;
+    }
+
+    // adapt channel selection to input source
+    switch(inputSource) {
+    case AUDIO_SOURCE_VOICE_UPLINK:
+        channels = AudioSystem::CHANNEL_IN_VOICE_UPLINK;
+        break;
+    case AUDIO_SOURCE_VOICE_DOWNLINK:
+        channels = AudioSystem::CHANNEL_IN_VOICE_DNLINK;
+        break;
+    case AUDIO_SOURCE_VOICE_CALL:
+        channels = AudioSystem::CHANNEL_IN_VOICE_UPLINK_DNLINK;
+        break;
+    default:
+        break;
+    }
+
+    AudioInputDescriptor *inputDesc = new AudioInputDescriptor();
+
+    inputDesc->mInputSource = inputSource;
+    inputDesc->mDevice = device;
+    inputDesc->mSamplingRate = samplingRate;
+    inputDesc->mFormat = format;
+    inputDesc->mChannels = channels;
+    inputDesc->mAcoustics = acoustics;
+    inputDesc->mRefCount = 0;
+    input = mpClientInterface->openInput(&inputDesc->mDevice,
+                                    &inputDesc->mSamplingRate,
+                                    &inputDesc->mFormat,
+                                    &inputDesc->mChannels,
+                                    inputDesc->mAcoustics);
+
+    // only accept input with the exact requested set of parameters
+    if (input == 0 ||
+        (samplingRate != inputDesc->mSamplingRate) ||
+        (format != inputDesc->mFormat) ||
+        (channels != inputDesc->mChannels)) {
+        LOGV("getInput() failed opening input: samplingRate %d, format %d, channels %d",
+                samplingRate, format, channels);
+        if (input != 0) {
+            mpClientInterface->closeInput(input);
+        }
+        delete inputDesc;
+        return 0;
+    }
+    mInputs.add(input, inputDesc);
+    return input;
+}
+
 // ----------------------------------------------------------------------------
 // AudioPolicyManagerALSA
 // ----------------------------------------------------------------------------
