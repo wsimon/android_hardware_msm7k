@@ -254,9 +254,11 @@ AudioHardwareALSA::openInputStream(uint32_t devices,
 // non-default implementation
 size_t AudioHardwareALSA::getInputBufferSize(uint32_t sampleRate, int format, int channelCount)
 {
-    if (!(sampleRate == 8000 ||
+   if (!(sampleRate == 8000 ||
+        sampleRate == 11025 ||
         sampleRate == 16000 ||
-        sampleRate == 11025)) {
+        sampleRate == 44100 ||
+        sampleRate == 48000)) {
         LOGW("getInputBufferSize bad sampling rate: %d", sampleRate);
         return 0;
     }
