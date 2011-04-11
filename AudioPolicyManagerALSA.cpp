@@ -287,7 +287,7 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy,
               // if SCO device is requested but no SCO device is available, fall back to default case
               // FALL THROUGH
 
-           default:	// FORCE_NONE
+           default: // FORCE_NONE
               device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADPHONE;
               if (device) break;
               device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADSET;
@@ -497,7 +497,7 @@ status_t AudioPolicyManagerALSA::stopOutput(audio_io_handle_t output, AudioSyste
               setOutputDevice(mHardwareOutput, newDevice, false, mOutputs.valueFor(mHardwareOutput)->mLatency*2);
         }
         // store time at which the last music track was stopped - see computeVolume()
-	   if (stream == AudioSystem::MUSIC) {
+        if (stream == AudioSystem::MUSIC) {
                mMusicStopTime = systemTime();
            }
            return NO_ERROR;
