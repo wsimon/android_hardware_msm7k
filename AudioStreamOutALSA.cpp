@@ -77,6 +77,14 @@ ssize_t AudioStreamOutALSA::write(const void *buffer, size_t bytes)
         mPowerLock = true;
     }
 
+       /* check if handle is still valid, otherwise we are coming out of standby */
+    if(mHandle->handle == NULL) {
+        nsecs_t previously = systemTime();
+        mHandle->module->open(mHandle, mHandle->curDev, mHandle->curMode);
+        nsecs_t delta = systemTime() - previously;
+        LOGE("RE-OPEN AFTER STANDBY:: took %llu msecs\n", ns2ms(delta));
+    }
+
     acoustic_device_t *aDev = acoustics();
 
     // For output, we will pass the data on to the acoustics module, but the actual
@@ -152,6 +160,8 @@ status_t AudioStreamOutALSA::standby()
     AutoMutex lock(mLock);
 
     snd_pcm_drain (mHandle->handle);
+
+    mHandle->module->close(mHandle);
 
     if (mPowerLock) {
         release_wake_lock ("AudioOutLock");
