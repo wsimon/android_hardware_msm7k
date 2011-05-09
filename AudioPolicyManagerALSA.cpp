@@ -344,13 +344,8 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy,
              // FALL THROUGH
 
         case STRATEGY_MEDIA: {
-             uint32_t device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_AUX_DIGITAL;
-             if (device2 == 0) {
-                 device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADPHONE;
-             }
-             if (device2 == 0) {
-                 device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADSET;
-             }
+             uint32_t device2 = 0;
+
 #ifdef WITH_A2DP
              if (mA2dpOutput != 0) {
                 if (strategy == STRATEGY_SONIFICATION && !a2dpUsedForSonification()) {
@@ -365,6 +360,17 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy,
                 if (device2 == 0) {
                     device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER;
                 }
+            }
+            else {
+#endif
+                device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_AUX_DIGITAL;
+                if (device2 == 0) {
+                    device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADPHONE;
+                }
+                if (device2 == 0) {
+                    device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADSET;
+                }
+#ifdef WITH_A2DP
             }
 #endif
             // Once SCO connection is connected, map strategy_media to
