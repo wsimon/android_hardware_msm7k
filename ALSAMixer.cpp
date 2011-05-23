@@ -1,6 +1,6 @@
 /* ALSAMixer.cpp
  **
- ** Copyright 2008-2010 Wind River Systems
+ ** Copyright 2008-2009 Wind River Systems
  **
  ** Licensed under the Apache License, Version 2.0 (the "License");
  ** you may not use this file except in compliance with the License.
@@ -169,8 +169,6 @@ ALSAMixer::ALSAMixer()
 
     for (int i = 0; i <= SND_PCM_STREAM_LAST; i++) {
 
-        if (!mMixer[i]) continue;
-
         mixer_info_t *info = mixerMasterProp[i].mInfo = new mixer_info_t;
 
         property_get (mixerMasterProp[i].propName,
@@ -243,6 +241,7 @@ ALSAMixer::ALSAMixer()
             LOGV("Mixer: route '%s' %s.", info->name, info->elem ? "found" : "not found");
         }
     }
+
     LOGV("mixer initialized.");
 }
 
@@ -364,8 +363,8 @@ status_t ALSAMixer::setCaptureMuteState(uint32_t device, bool state)
                         state ? "enable" : "disable", info->name);
                     return INVALID_OPERATION;
                 }
-            }
 
+            }
             info->mute = state;
         }
 
@@ -429,5 +428,4 @@ status_t ALSAMixer::getPlaybackMuteState(uint32_t device, bool *state)
 
     return BAD_VALUE;
 }
-
 };        // namespace android

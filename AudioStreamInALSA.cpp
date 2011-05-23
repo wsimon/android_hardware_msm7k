@@ -83,7 +83,6 @@ ssize_t AudioStreamInALSA::read(void *buffer, ssize_t bytes)
             if (mHandle->handle) {
                 if (n < 0) {
                     n = snd_pcm_recover(mHandle->handle, n, 0);
-
                     if (aDev && aDev->recover) aDev->recover(aDev, n);
                 } else
                     n = snd_pcm_prepare(mHandle->handle);

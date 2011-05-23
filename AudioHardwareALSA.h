@@ -1,6 +1,6 @@
 /* AudioHardwareALSA.h
  **
- ** Copyright 2008-2010, Wind River Systems
+ ** Copyright 2008-2009, Wind River Systems
  **
  ** Licensed under the Apache License, Version 2.0 (the "License");
  ** you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ struct alsa_handle_t {
     uint32_t            sampleRate;
     unsigned int        latency;         // Delay in usec
     unsigned int        bufferSize;      // Size of sample buffer
+    int                 mmap;
     void *              modPrivate;
 };
 
@@ -60,7 +61,11 @@ struct alsa_device_t {
     status_t (*init)(alsa_device_t *, ALSAHandleList &);
     status_t (*open)(alsa_handle_t *, uint32_t, int);
     status_t (*close)(alsa_handle_t *);
+    status_t (*standby)(alsa_handle_t *);
     status_t (*route)(alsa_handle_t *, uint32_t, int);
+    status_t (*voicevolume)(float);
+    status_t (*set)(const String8&);
+    status_t (*resetDefaults)(alsa_handle_t *handle);
 };
 
 /**
@@ -99,6 +104,7 @@ public:
     status_t                setMasterGain(float gain);
 
     status_t                setVolume(uint32_t device, float left, float right);
+
     status_t                setGain(uint32_t device, float gain);
 
     status_t                setCaptureMuteState(uint32_t device, bool state);
@@ -108,6 +114,7 @@ public:
 
 private:
     snd_mixer_t *           mMixer[SND_PCM_STREAM_LAST+1];
+
 };
 
 class ALSAControl
@@ -120,6 +127,9 @@ public:
     status_t                set(const char *name, unsigned int value, int index = -1);
 
     status_t                set(const char *name, const char *);
+
+    status_t                getmin(const char *name, unsigned int &max);
+    status_t                getmax(const char *name, unsigned int &min);
 
 private:
     snd_ctl_t *             mHandle;
@@ -208,6 +218,7 @@ public:
 
 private:
     uint32_t            mFrameCount;
+
 };
 
 class AudioStreamInALSA : public AudioStreamIn, public ALSAStreamOps
@@ -307,12 +318,13 @@ public:
     virtual status_t    getMicMute(bool* state);
 
     // set/get global audio parameters
-    //virtual status_t    setParameters(const String8& keyValuePairs);
+    virtual status_t    setParameters(const String8& keyValuePairs);
+
     //virtual String8     getParameters(const String8& keys);
 
     // Returns audio input buffer size according to parameters passed or 0 if one of the
     // parameters is not supported
-    //virtual size_t    getInputBufferSize(uint32_t sampleRate, int format, int channels);
+    virtual size_t    getInputBufferSize(uint32_t sampleRate, int format, int channels);
 
     /** This method creates and opens the audio hardware output stream */
     virtual AudioStreamOut* openOutputStream(
@@ -356,6 +368,9 @@ protected:
     acoustic_device_t * mAcousticDevice;
 
     ALSAHandleList      mDeviceList;
+
+private:
+    Mutex               mLock;
 };
 
 // ----------------------------------------------------------------------------
