@@ -193,7 +193,6 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
                 mpClientInterface->setParameters(activeInput, param.toString());
             }
         }
-#ifdef HAS_FM_RADIO
         else {
            if (device == AudioSystem::DEVICE_IN_FM_ANALOG) {
                routing_strategy strategy = getStrategy((AudioSystem::stream_type)3);
@@ -247,7 +246,6 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
                 }
              }
       }
-#endif
         return NO_ERROR;
     }
 
@@ -289,7 +287,7 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy,
               // if SCO device is requested but no SCO device is available, fall back to default case
               // FALL THROUGH
 
-           default:	// FORCE_NONE
+           default: // FORCE_NONE
               device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADPHONE;
               if (device) break;
               device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADSET;
@@ -346,13 +344,8 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy,
              // FALL THROUGH
 
         case STRATEGY_MEDIA: {
-             uint32_t device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_AUX_DIGITAL;
-             if (device2 == 0) {
-                 device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADPHONE;
-             }
-             if (device2 == 0) {
-                 device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADSET;
-             }
+             uint32_t device2 = 0;
+
 #ifdef WITH_A2DP
              if (mA2dpOutput != 0) {
                 if (strategy == STRATEGY_SONIFICATION && !a2dpUsedForSonification()) {
@@ -368,6 +361,17 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy,
                     device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER;
                 }
             }
+            else {
+#endif
+                device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_AUX_DIGITAL;
+                if (device2 == 0) {
+                    device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADPHONE;
+                }
+                if (device2 == 0) {
+                    device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_WIRED_HEADSET;
+                }
+#ifdef WITH_A2DP
+            }
 #endif
             // Once SCO connection is connected, map strategy_media to
             // SCO headset for music streaming. BT SCO MM_UL use case
@@ -382,11 +386,11 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy,
                     device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_BLUETOOTH_SCO;
                  }
            }
-#ifdef HAS_FM_RADIO
+
             if (device2 == 0) {
                 device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_FM_TRANSMIT;
             }
-#endif
+
             if (device2 == 0) {
                 device2 = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_SPEAKER;
             }
@@ -406,7 +410,7 @@ uint32_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy,
          LOGV("getDeviceForStrategy() strategy %d, device %x", strategy, device);
          return device;
 }
-#ifdef HAS_FM_RADIO
+
 audio_io_handle_t AudioPolicyManagerALSA::getFMInput(int inputSource,
                                     uint32_t samplingRate,
                                     uint32_t format,
@@ -457,7 +461,6 @@ audio_io_handle_t AudioPolicyManagerALSA::getFMInput(int inputSource,
     mInputs.add(input, inputDesc);
     return input;
 }
-#endif
 
 status_t AudioPolicyManagerALSA::stopOutput(audio_io_handle_t output, AudioSystem::stream_type stream)
 {
@@ -500,7 +503,7 @@ status_t AudioPolicyManagerALSA::stopOutput(audio_io_handle_t output, AudioSyste
               setOutputDevice(mHardwareOutput, newDevice, false, mOutputs.valueFor(mHardwareOutput)->mLatency*2);
         }
         // store time at which the last music track was stopped - see computeVolume()
-	   if (stream == AudioSystem::MUSIC) {
+        if (stream == AudioSystem::MUSIC) {
                mMusicStopTime = systemTime();
            }
            return NO_ERROR;
@@ -508,6 +511,68 @@ status_t AudioPolicyManagerALSA::stopOutput(audio_io_handle_t output, AudioSyste
               LOGW("stopOutput() refcount is already 0 for output %d", output);
               return INVALID_OPERATION;
        }
+}
+
+audio_io_handle_t AudioPolicyManagerALSA::getInput(int inputSource,
+                                    uint32_t samplingRate,
+                                    uint32_t format,
+                                    uint32_t channels,
+                                    AudioSystem::audio_in_acoustics acoustics)
+{
+    audio_io_handle_t input = 0;
+    uint32_t device = getDeviceForInputSource(inputSource);
+
+    LOGV("getInput() inputSource %d, samplingRate %d, format %d, channels %x, acoustics %x", inputSource, samplingRate, format, channels, acoustics);
+
+    if (device == 0) {
+        return 0;
+    }
+
+    // adapt channel selection to input source
+    switch(inputSource) {
+    case AUDIO_SOURCE_VOICE_UPLINK:
+        channels = AudioSystem::CHANNEL_IN_VOICE_UPLINK;
+        break;
+    case AUDIO_SOURCE_VOICE_DOWNLINK:
+        channels = AudioSystem::CHANNEL_IN_VOICE_DNLINK;
+        break;
+    case AUDIO_SOURCE_VOICE_CALL:
+        channels = AudioSystem::CHANNEL_IN_VOICE_UPLINK_DNLINK;
+        break;
+    default:
+        break;
+    }
+
+    AudioInputDescriptor *inputDesc = new AudioInputDescriptor();
+
+    inputDesc->mInputSource = inputSource;
+    inputDesc->mDevice = device;
+    inputDesc->mSamplingRate = samplingRate;
+    inputDesc->mFormat = format;
+    inputDesc->mChannels = channels;
+    inputDesc->mAcoustics = acoustics;
+    inputDesc->mRefCount = 0;
+    input = mpClientInterface->openInput(&inputDesc->mDevice,
+                                    &inputDesc->mSamplingRate,
+                                    &inputDesc->mFormat,
+                                    &inputDesc->mChannels,
+                                    inputDesc->mAcoustics);
+
+    // only accept input with the exact requested set of parameters
+    if (input == 0 ||
+        (samplingRate != inputDesc->mSamplingRate) ||
+        (format != inputDesc->mFormat) ||
+        (channels != inputDesc->mChannels)) {
+        LOGV("getInput() failed opening input: samplingRate %d, format %d, channels %d",
+                samplingRate, format, channels);
+        if (input != 0) {
+            mpClientInterface->closeInput(input);
+        }
+        delete inputDesc;
+        return 0;
+    }
+    mInputs.add(input, inputDesc);
+    return input;
 }
 
 // ----------------------------------------------------------------------------

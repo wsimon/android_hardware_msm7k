@@ -53,6 +53,8 @@ status_t ALSAControl::getmin(const char *name, unsigned int &min)
         return NO_INIT;
     }
 
+    LOGV("%s(%s, %d)", __FUNCTION__, name, min);
+
     snd_ctl_elem_id_t *id;
     snd_ctl_elem_info_t *info;
 
@@ -81,6 +83,8 @@ status_t ALSAControl::getmax(const char *name, unsigned int &max)
         return NO_INIT;
     }
 
+    LOGV("%s(%s, %d)", __FUNCTION__, name, max);
+
     snd_ctl_elem_id_t *id;
     snd_ctl_elem_info_t *info;
 
@@ -108,6 +112,8 @@ status_t ALSAControl::get(const char *name, unsigned int &value, int index)
         LOGE("Control not initialized");
         return NO_INIT;
     }
+
+    LOGV("%s(%s, %d, %d)", __FUNCTION__, name, value, index);
 
     snd_ctl_elem_id_t *id;
     snd_ctl_elem_info_t *info;
@@ -172,6 +178,8 @@ status_t ALSAControl::set(const char *name, unsigned int value, int index)
         LOGE("Control not initialized");
         return NO_INIT;
     }
+
+    LOGV("%s(%s, %d, %d)", __FUNCTION__, name, value, index );
 
     snd_ctl_elem_id_t *id;
     snd_ctl_elem_info_t *info;
@@ -239,6 +247,8 @@ status_t ALSAControl::set(const char *name, const char *value)
         LOGE("Control not initialized");
         return NO_INIT;
     }
+
+    LOGV("%s(%s, %s)", __FUNCTION__, name, value);
 
     snd_ctl_elem_id_t *id;
     snd_ctl_elem_info_t *info;

@@ -39,7 +39,7 @@ namespace android
 static int s_device_open(const hw_module_t*, const char*, hw_device_t**);
 static int s_device_close(hw_device_t*);
 static status_t s_init(alsa_device_t *, ALSAHandleList &);
-static status_t s_open(alsa_handle_t *, uint32_t, int);
+static status_t s_open(alsa_handle_t *, uint32_t, int, uint32_t);
 static status_t s_close(alsa_handle_t *);
 static status_t s_standby(alsa_handle_t *);
 static status_t s_route(alsa_handle_t *, uint32_t, int);
@@ -104,6 +104,7 @@ static alsa_handle_t _defaultsOut = {
     devices     : AudioSystem::DEVICE_OUT_ALL,
     curDev      : 0,
     curMode     : 0,
+    curChannels : 0,
     handle      : 0,
     format      : SND_PCM_FORMAT_S16_LE, // AudioSystem::PCM_16_BIT
     channels    : 2,
@@ -119,6 +120,7 @@ static alsa_handle_t _defaultsIn = {
     devices     : AudioSystem::DEVICE_IN_ALL,
     curDev      : 0,
     curMode     : 0,
+    curChannels : 0,
     handle      : 0,
     format      : SND_PCM_FORMAT_S16_LE, // AudioSystem::PCM_16_BIT
     channels    : 1,
@@ -457,7 +459,7 @@ static status_t s_init(alsa_device_t *module, ALSAHandleList &list)
     return NO_ERROR;
 }
 
-static status_t s_open(alsa_handle_t *handle, uint32_t devices, int mode)
+static status_t s_open(alsa_handle_t *handle, uint32_t devices, int mode, uint32_t channels)
 {
     // Close off previously opened device.
     // It would be nice to determine if the underlying device actually
@@ -508,6 +510,7 @@ static status_t s_open(alsa_handle_t *handle, uint32_t devices, int mode)
 
     handle->curDev = devices;
     handle->curMode = mode;
+    handle->curChannels = channels;
 
     return err;
 }
@@ -519,6 +522,7 @@ static status_t s_close(alsa_handle_t *handle)
     handle->handle = 0;
     handle->curDev = 0;
     handle->curMode = 0;
+    handle->curChannels = 0;
     if (h) {
         snd_pcm_drain(h);
         err = snd_pcm_close(h);
@@ -543,7 +547,7 @@ static status_t s_route(alsa_handle_t *handle, uint32_t devices, int mode)
 
     if (handle->handle && handle->curDev == devices && handle->curMode == mode) return NO_ERROR;
 
-    return s_open(handle, devices, mode);
+    return s_open(handle, devices, mode, handle->curChannels);
 }
 
 }
