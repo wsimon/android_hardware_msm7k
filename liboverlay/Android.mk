@@ -22,6 +22,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)
 LOCAL_SHARED_LIBRARIES := liblog libcutils
 LOCAL_SRC_FILES := overlayLib.cpp
 LOCAL_MODULE := liboverlay
+LOCAL_MODULE_TAGS := optional
 include $(BUILD_SHARED_LIBRARY)
 
 # HAL module implemenation, not prelinked and stored in
@@ -32,4 +33,5 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 LOCAL_SHARED_LIBRARIES := liblog liboverlay libcutils
 LOCAL_SRC_FILES := overlay.cpp
 LOCAL_MODULE := overlay.default
+LOCAL_MODULE_TAGS := optional
 include $(BUILD_SHARED_LIBRARY)
