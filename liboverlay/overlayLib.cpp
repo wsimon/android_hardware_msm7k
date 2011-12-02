@@ -73,7 +73,7 @@ static int get_size(int format, int w, int h) {
 
 #define LOG_TAG "OverlayLIB"
 static void reportError(const char* message) {
-    LOGE(message);
+    LOGE("%s", message);
 }
 
 using namespace overlay;
